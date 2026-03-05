@@ -13,6 +13,7 @@ import { AnimatedPressable } from "../components/ui/AnimatedPressable";
 import { SkeletonLoader } from "../components/ui/SkeletonLoader";
 import { VouchSuccessToast } from "../components/ui/VouchSuccessToast";
 import { ConfirmationModal } from "../components/ui/ConfirmationModal";
+import { ErrorState } from "../components/ui/ErrorState";
 import { useFeedPhotos, useFollowingFeedPhotos, useRefreshFeed, useUserVouchedPhotoIds } from "../hooks/usePhotos";
 import { useVouch } from "../hooks/useVouch";
 import { useWallet } from "../hooks/useWallet";
@@ -60,9 +61,9 @@ export function FeedScreen() {
   const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { data: explorePhotos, isLoading: isLoadingExplore, isRefetching: isRefetchingExplore } = useFeedPhotos();
+  const { data: explorePhotos, isLoading: isLoadingExplore, isRefetching: isRefetchingExplore, isError: isExploreError } = useFeedPhotos();
   const { walletAddress } = useWallet();
-  const { data: followingPhotos, isLoading: isLoadingFollowing, isRefetching: isRefetchingFollowing } = useFollowingFeedPhotos(walletAddress);
+  const { data: followingPhotos, isLoading: isLoadingFollowing, isRefetching: isRefetchingFollowing, isError: isFollowingError } = useFollowingFeedPhotos(walletAddress);
   const refreshFeed = useRefreshFeed();
   const { vouch, isVouching, error, clearError, defaultAmount, lastSuccess, clearSuccess } = useVouch();
   const { data: vouchedPhotoIds } = useUserVouchedPhotoIds(walletAddress);
@@ -89,6 +90,7 @@ export function FeedScreen() {
   const activePhotos = feedView === "following" ? followingPhotos : explorePhotos;
   const activeIsLoading = feedView === "following" ? isLoadingFollowing : isLoadingExplore;
   const activeIsRefetching = feedView === "following" ? isRefetchingFollowing : isRefetchingExplore;
+  const activeIsError = feedView === "following" ? isFollowingError : isExploreError;
 
   useEffect(() => {
     if (lastSuccess) {
@@ -154,6 +156,20 @@ export function FeedScreen() {
         style={{ paddingTop: insets.top }}
       >
         <FeedSkeleton />
+      </View>
+    );
+  }
+
+  if (activeIsError) {
+    return (
+      <View
+        className="flex-1 bg-background"
+        style={{ paddingTop: insets.top }}
+      >
+        <ErrorState
+          message="Couldn't load the feed. Check your connection and pull to refresh."
+          onRetry={refreshFeed}
+        />
       </View>
     );
   }

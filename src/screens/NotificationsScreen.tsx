@@ -9,6 +9,7 @@ import { useWallet } from "../hooks/useWallet";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "../components/ui/Avatar";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
+import { ErrorState } from "../components/ui/ErrorState";
 import { SkeletonLoader } from "../components/ui/SkeletonLoader";
 import { timeAgo, truncateAddress, formatSOL } from "../utils/format";
 import { colors } from "../theme/colors";
@@ -19,7 +20,7 @@ export function NotificationsScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { walletAddress } = useWallet();
-  const { data: notifications, isLoading, isRefetching } = useNotifications(walletAddress);
+  const { data: notifications, isLoading, isRefetching, isError } = useNotifications(walletAddress);
   const { markRead } = useMarkNotificationsRead();
   const queryClient = useQueryClient();
 
@@ -155,6 +156,19 @@ export function NotificationsScreen() {
             </View>
           ))}
         </View>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+        <View className="px-4 pt-4 pb-2">
+          <Text className="text-text-primary font-display-bold text-xl">
+            Notifications
+          </Text>
+        </View>
+        <ErrorState onRetry={handleRefresh} />
       </View>
     );
   }

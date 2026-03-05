@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, FlatList } from "react-native";
+import { View, Text, TextInput, FlatList, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useUserSearch } from "../hooks/useUserSearch";
@@ -14,7 +14,7 @@ export function UserSearchScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [query, setQuery] = useState("");
-  const { data: results, isLoading } = useUserSearch(query);
+  const { data: results, isLoading, isError } = useUserSearch(query);
   const inputRef = useRef<TextInput>(null);
 
   // Auto-focus on mount
@@ -90,7 +90,17 @@ export function UserSearchScreen() {
                 </Text>
               </>
             ) : isLoading ? (
-              <Text className="text-text-tertiary text-sm">Searching...</Text>
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : isError ? (
+              <>
+                <Ionicons name="cloud-offline-outline" size={28} color={colors.error} />
+                <Text className="text-text-primary text-lg font-display-semibold text-center">
+                  Search failed
+                </Text>
+                <Text className="text-text-tertiary text-sm text-center leading-5">
+                  Check your connection and try again.
+                </Text>
+              </>
             ) : (
               <>
                 <Text className="text-text-primary text-lg font-display-semibold text-center">

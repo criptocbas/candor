@@ -18,6 +18,7 @@ import { useWallet } from "../hooks/useWallet";
 import { VerificationBadge } from "../components/VerificationBadge";
 import { Avatar } from "../components/ui/Avatar";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
+import { ErrorState } from "../components/ui/ErrorState";
 import { SkeletonLoader } from "../components/ui/SkeletonLoader";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { truncateAddress, formatSOL, formatUSD } from "../utils/format";
@@ -40,8 +41,8 @@ export function UserProfileScreen() {
 
   const { walletAddress: myWallet } = useWallet();
   const queryClient = useQueryClient();
-  const { data: userInfo, isLoading: isLoadingUser } = useUserInfo(walletAddress);
-  const { data: photos, isLoading: isLoadingPhotos, isRefetching: isRefetchingPhotos } = useUserPhotos(walletAddress);
+  const { data: userInfo, isLoading: isLoadingUser, isError: isUserError } = useUserInfo(walletAddress);
+  const { data: photos, isLoading: isLoadingPhotos, isRefetching: isRefetchingPhotos, isError: isPhotosError } = useUserPhotos(walletAddress);
   const { data: earnings, isRefetching: isRefetchingEarnings } = useEarnings(walletAddress);
   const { data: solPrice } = useSolPrice();
   const { data: isFollowing } = useIsFollowing(myWallet, walletAddress);
@@ -76,6 +77,15 @@ export function UserProfileScreen() {
     transform: [{ translateY: cardTranslateY.value }],
     opacity: cardOpacity.value,
   }));
+
+  // ─── Error state ─────────────────────────────────────────────────
+  if (!isLoading && (isUserError || isPhotosError)) {
+    return (
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+        <ErrorState onRetry={handleRefresh} />
+      </View>
+    );
+  }
 
   // ─── Loading skeleton ─────────────────────────────────────────────
   if (isLoading) {
