@@ -9,6 +9,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,6 +39,8 @@ import {
   timeAgo,
   formatSOL,
 } from "../utils/format";
+import { Ionicons } from "@expo/vector-icons";
+import { colors } from "../theme/colors";
 import { getExplorerUrl } from "../services/solana";
 import { RootStackParamList, Vouch } from "../types";
 import { useDoubleTap } from "../hooks/useDoubleTap";
@@ -283,12 +286,13 @@ export function PhotoDetailScreen() {
         <View>
           <SectionHeader title="Verification Proof" />
           <View className="bg-surface rounded-2xl p-4">
-            <ProofRow label="Image Hash" value={photo.image_hash} mono />
+            <ProofRow label="Image Hash" value={photo.image_hash} copyValue={photo.image_hash} mono />
 
             {photo.verification_tx && (
               <ProofRow
                 label="Transaction"
                 value={truncateAddress(photo.verification_tx, 8)}
+                copyValue={photo.verification_tx}
                 onPress={() =>
                   Linking.openURL(getExplorerUrl(photo.verification_tx!))
                 }
@@ -299,6 +303,7 @@ export function PhotoDetailScreen() {
             <ProofRow
               label="Creator"
               value={truncateAddress(photo.creator_wallet, 6)}
+              copyValue={photo.creator_wallet}
               mono
             />
 
@@ -392,6 +397,7 @@ export function PhotoDetailScreen() {
 function ProofRow({
   label,
   value,
+  copyValue,
   mono = false,
   isLink = false,
   isLast = false,
@@ -399,11 +405,20 @@ function ProofRow({
 }: {
   label: string;
   value: string;
+  copyValue?: string;
   mono?: boolean;
   isLink?: boolean;
   isLast?: boolean;
   onPress?: () => void;
 }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(copyValue || value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   const content = (
     <View
       className={`flex-row justify-between items-center py-2.5 ${
@@ -411,19 +426,26 @@ function ProofRow({
       }`}
     >
       <Text className="text-text-tertiary text-xs">{label}</Text>
-      <Text
-        className={`text-sm ${
-          isLink
-            ? "text-primary"
-            : mono
-              ? "text-text-secondary"
-              : "text-text-secondary"
-        }`}
-        numberOfLines={1}
-        style={{ maxWidth: "60%" }}
-      >
-        {value}
-      </Text>
+      <View className="flex-row items-center gap-2" style={{ maxWidth: "65%" }}>
+        <Text
+          className={`text-sm ${
+            isLink ? "text-primary" : "text-text-secondary"
+          }`}
+          numberOfLines={1}
+          style={{ flexShrink: 1 }}
+        >
+          {value}
+        </Text>
+        {(copyValue || mono || isLink) && (
+          <AnimatedPressable haptic="light" onPress={handleCopy} scaleValue={0.85}>
+            <Ionicons
+              name={copied ? "checkmark" : "copy-outline"}
+              size={14}
+              color={copied ? colors.success : colors.textTertiary}
+            />
+          </AnimatedPressable>
+        )}
+      </View>
     </View>
   );
 

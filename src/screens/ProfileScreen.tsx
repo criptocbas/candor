@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 // Dynamically imported in handlePickAvatar — requires EAS rebuild to work
 // import * as ImagePicker from "expo-image-picker";
@@ -284,10 +285,16 @@ export function ProfileScreen() {
           )}
         </View>
 
-        {/* Wallet pill — subtle */}
+        {/* Wallet pill — tap to copy, long-press to disconnect */}
         <AnimatedPressable
           haptic="light"
-          onPress={() => {
+          onPress={async () => {
+            if (walletAddress) {
+              await Clipboard.setStringAsync(walletAddress);
+              Alert.alert("Copied", "Wallet address copied to clipboard.");
+            }
+          }}
+          onLongPress={() => {
             Alert.alert(
               "Disconnect Wallet?",
               "You'll need to reconnect through Phantom to use Candor.",
@@ -307,6 +314,7 @@ export function ProfileScreen() {
           <Text className="text-text-tertiary text-xs">
             {walletAddress ? truncateAddress(walletAddress, 4) : ""}
           </Text>
+          <Ionicons name="copy-outline" size={10} color={colors.textTertiary} style={{ marginLeft: 4 }} />
         </AnimatedPressable>
       </View>
 
