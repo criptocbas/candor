@@ -166,5 +166,6 @@ export function useRefreshFeed() {
     queryClient.invalidateQueries({ queryKey: ["photos"] });
     queryClient.invalidateQueries({ queryKey: ["vouches"] });
     queryClient.invalidateQueries({ queryKey: ["follows"] });
+    queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
   };
 }

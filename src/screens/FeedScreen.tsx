@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { PhotoCard } from "../components/PhotoCard";
+import { CreatorLeaderboard } from "../components/CreatorLeaderboard";
 import { FeedMap } from "../components/FeedMap";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
 import { SkeletonLoader } from "../components/ui/SkeletonLoader";
@@ -226,6 +227,7 @@ export function FeedScreen() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           extraData={vouchedPhotoIds}
+          ListHeaderComponent={feedView === "explore" ? <CreatorLeaderboard /> : null}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 }}
           refreshControl={
             <RefreshControl
