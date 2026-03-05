@@ -17,3 +17,19 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 export const PHOTOS_BUCKET = "photos";
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+/**
+ * Ensure a user row exists for the given wallet address.
+ * Uses upsert with onConflict so it's safe to call multiple times.
+ */
+export async function ensureUserExists(walletAddress: string): Promise<void> {
+  const { error } = await supabase
+    .from("users")
+    .upsert(
+      { wallet_address: walletAddress, display_name: "Anon" },
+      { onConflict: "wallet_address", ignoreDuplicates: true }
+    );
+  if (error) {
+    console.error("ensureUserExists failed:", error);
+  }
+}

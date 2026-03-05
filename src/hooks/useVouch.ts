@@ -6,7 +6,7 @@ import { useConnection } from "../utils/ConnectionProvider";
 import { useWallet } from "./useWallet";
 import { buildVouchTransaction } from "../services/anchor";
 import { getPhotoRecordPDA } from "../services/solana";
-import { supabase } from "../services/supabase";
+import { supabase, ensureUserExists } from "../services/supabase";
 import { hashToBytes } from "../utils/crypto";
 import { formatSOL } from "../utils/format";
 
@@ -107,6 +107,9 @@ export function useVouch() {
             throw sendErr;
           }
         }
+
+        // Ensure voucher user row exists before inserting (so voucher_id FK gets linked)
+        await ensureUserExists(walletAddress);
 
         // Record vouch in Supabase with retry logic.
         // The on-chain transfer already succeeded — if the DB write fails,

@@ -4,7 +4,7 @@ import { useConnection } from "../utils/ConnectionProvider";
 import { useWallet } from "./useWallet";
 import { buildVerifyPhotoTransaction } from "../services/anchor";
 import { uploadImage, CaptureMetadata } from "../services/verification";
-import { supabase } from "../services/supabase";
+import { supabase, ensureUserExists } from "../services/supabase";
 import { PROGRAM_ID } from "../services/solana";
 import { PhotoUploadData } from "../types";
 
@@ -87,6 +87,9 @@ export function useVerification() {
           metadata.imageUri,
           walletAddress
         );
+
+        // Ensure user row exists before inserting (so creator_id FK gets linked)
+        await ensureUserExists(walletAddress);
 
         // Insert photo record in Supabase with retry logic.
         // The on-chain verification and image upload already succeeded —

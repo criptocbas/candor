@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../services/supabase";
+import { supabase, ensureUserExists } from "../services/supabase";
 
 export function useFollowingList(walletAddress: string | null) {
   return useQuery({
@@ -94,6 +94,9 @@ export function useToggleFollow() {
             .eq("following_wallet", targetWallet);
           if (error) throw error;
         } else {
+          // Ensure both user rows exist before inserting (so FK IDs get linked)
+          await ensureUserExists(myWallet);
+          await ensureUserExists(targetWallet);
           const { error } = await supabase.from("follows").insert({
             follower_wallet: myWallet,
             following_wallet: targetWallet,
