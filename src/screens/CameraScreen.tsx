@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from "react";
-import { View, Text, TextInput, Alert, StatusBar, ActivityIndicator, Pressable } from "react-native";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { View, Text, TextInput, StatusBar, ActivityIndicator, Pressable } from "react-native";
 import { CameraView } from "expo-camera";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,19 +30,26 @@ export function CameraScreen() {
     capture,
     clearCapture,
   } = useCamera();
-  const { verifyAndUpload, isVerifying, error } = useVerification();
+  const { verifyAndUpload, isVerifying, error, clearError } = useVerification();
   const { connected } = useWallet();
   const [caption, setCaption] = useState("");
   const [facing, setFacing] = useState<"front" | "back">("back");
   const [includeLocation, setIncludeLocation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const successTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Sync hook error to local state for inline display
+  useEffect(() => {
+    if (error) setVerifyError(error);
+  }, [error]);
 
   const dismissSuccess = useCallback(() => {
     if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
     setShowSuccess(false);
     clearCapture();
     setCaption("");
+    setVerifyError(null);
   }, [clearCapture]);
 
   // Ring pulse animation values
@@ -165,10 +172,24 @@ export function CameraScreen() {
                 multiline
               />
 
-              {/* Hero CTA — Verify & Post */}
+              {/* Error message with retry */}
+              {verifyError && (
+                <View className="rounded-2xl px-4 py-3" style={{ backgroundColor: "rgba(207,102,121,0.12)", borderWidth: 1, borderColor: "rgba(207,102,121,0.25)", borderRadius: 16 }}>
+                  <Text className="text-error text-sm font-display-semibold mb-1">
+                    Verification failed
+                  </Text>
+                  <Text className="text-text-secondary text-xs leading-4">
+                    {verifyError}
+                  </Text>
+                </View>
+              )}
+
+              {/* Hero CTA — Verify & Post (or Retry) */}
               <AnimatedPressable
                 haptic="medium"
                 onPress={async () => {
+                  setVerifyError(null);
+                  clearError();
                   const result = await verifyAndUpload(lastCapture, caption);
                   if (result) {
                     Haptics.notificationAsync(
@@ -178,11 +199,10 @@ export function CameraScreen() {
                     successTimeoutRef.current = setTimeout(() => {
                       dismissSuccess();
                     }, 1500);
-                  } else if (error) {
+                  } else {
                     Haptics.notificationAsync(
                       Haptics.NotificationFeedbackType.Error
                     );
-                    Alert.alert("Verification Failed", error);
                   }
                 }}
                 disabled={isVerifying || !connected}
@@ -198,9 +218,11 @@ export function CameraScreen() {
                 >
                   {isVerifying
                     ? "Verifying..."
-                    : connected
-                      ? "Verify & Post"
-                      : "Connect Wallet"}
+                    : verifyError
+                      ? "Retry Verification"
+                      : connected
+                        ? "Verify & Post"
+                        : "Connect Wallet"}
                 </Text>
               </AnimatedPressable>
 
@@ -210,6 +232,8 @@ export function CameraScreen() {
                 onPress={() => {
                   clearCapture();
                   setCaption("");
+                  setVerifyError(null);
+                  clearError();
                 }}
                 className="items-center py-2"
               >
