@@ -154,4 +154,14 @@ Typography: System default (Roboto on Android). No custom fonts bundled.
 
 ## Skills
 
-When working on UI — screens, components, styling, animations, or any visual aspect of the app — **always read and follow `skills/candor-ui/SKILL.md` before writing any code**. This skill contains Candor's design system, animation patterns, component templates, and anti-patterns specific to our NativeWind + Reanimated stack. It is the source of truth for how the app should look and feel.
+**Always read the master skill before starting any task:**
+`skills/candor-app/SKILL.md`
+
+The master skill routes to the correct reference file depending on the task:
+
+- **UI/UX work** (screens, components, styling, animations) → `skills/candor-app/references/design-system.md`
+- **New features or product ideas** → `skills/candor-app/references/features-roadmap.md`
+- **On-chain / Anchor code** → `skills/candor-app/references/onchain-architecture.md`
+- **Hackathon strategy or submission** → `skills/candor-app/references/hackathon-strategy.md`
+
+The skill contains Candor's full design system, animation patterns, component templates, feature roadmap, Anchor patterns, MWA gotchas, and hackathon judging criteria. It is the source of truth for how the app should look, feel, and be built.

@@ -91,29 +91,52 @@ export function PhotoCard({
     opacity: hintOpacity.value,
   }));
 
-  // Double-tap vouch animation
-  const vouchIconScale = useSharedValue(0);
-  const vouchIconOpacity = useSharedValue(0);
+  // Double-tap vouch burst animation
+  const burstScale = useSharedValue(0);
+  const burstOpacity = useSharedValue(0);
+  const ringScale = useSharedValue(0);
+  const ringOpacity = useSharedValue(0);
+  const iconScale = useSharedValue(0);
+  const iconOpacity = useSharedValue(0);
 
-  const vouchIconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: vouchIconScale.value }],
-    opacity: vouchIconOpacity.value,
+  const burstStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: burstScale.value }],
+    opacity: burstOpacity.value,
+  }));
+
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: ringScale.value }],
+    opacity: ringOpacity.value,
+  }));
+
+  const iconAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: iconScale.value }],
+    opacity: iconOpacity.value,
   }));
 
   const handleDoubleTapVouch = useCallback(() => {
     if (isOwnPhoto || hasVouched || isVouching) return;
 
-    // Trigger visual feedback immediately
-    vouchIconScale.value = 0;
-    vouchIconOpacity.value = 1;
-    vouchIconScale.value = withSequence(
-      withSpring(1.3, { damping: 8, stiffness: 120 }),
-      withSpring(1, { damping: 12, stiffness: 100 })
+    // 1. Center icon: pop in with overshoot, then fade
+    iconScale.value = 0;
+    iconOpacity.value = 1;
+    iconScale.value = withSequence(
+      withSpring(1.4, { damping: 6, stiffness: 140 }),
+      withSpring(1, { damping: 10, stiffness: 100 })
     );
-    vouchIconOpacity.value = withDelay(
-      500,
-      withTiming(0, { duration: 300 })
-    );
+    iconOpacity.value = withDelay(600, withTiming(0, { duration: 300 }));
+
+    // 2. Ring: expand outward and fade
+    ringScale.value = 0.3;
+    ringOpacity.value = 0.8;
+    ringScale.value = withSpring(2.5, { damping: 12, stiffness: 60 });
+    ringOpacity.value = withDelay(200, withTiming(0, { duration: 500 }));
+
+    // 3. Burst glow: radial pulse
+    burstScale.value = 0.5;
+    burstOpacity.value = 0.6;
+    burstScale.value = withSpring(3, { damping: 15, stiffness: 50 });
+    burstOpacity.value = withDelay(100, withTiming(0, { duration: 600 }));
 
     onVouch();
   }, [isOwnPhoto, hasVouched, isVouching, onVouch]);
@@ -135,32 +158,61 @@ export function PhotoCard({
               contentFit="cover"
               transition={200}
             />
-            {/* Double-tap vouch visual feedback */}
-            <Animated.View
+            {/* Double-tap vouch burst — layered animation */}
+            <View
               pointerEvents="none"
-              style={[
-                vouchIconStyle,
-                {
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  alignItems: "center",
-                  justifyContent: "center",
-                },
-              ]}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              <View style={{
-                shadowColor: "#E8A838",
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.5,
-                shadowRadius: 20,
-                elevation: 10,
-              }}>
-                <Ionicons name="checkmark-circle" size={72} color={colors.primary} />
-              </View>
-            </Animated.View>
+              {/* Layer 1: Soft radial glow */}
+              <Animated.View
+                style={[
+                  burstStyle,
+                  {
+                    position: "absolute",
+                    width: 120,
+                    height: 120,
+                    borderRadius: 60,
+                    backgroundColor: "rgba(232,168,56,0.15)",
+                  },
+                ]}
+              />
+              {/* Layer 2: Expanding ring */}
+              <Animated.View
+                style={[
+                  ringStyle,
+                  {
+                    position: "absolute",
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    borderWidth: 2.5,
+                    borderColor: "rgba(232,168,56,0.5)",
+                  },
+                ]}
+              />
+              {/* Layer 3: Center icon with glow */}
+              <Animated.View style={iconAnimStyle}>
+                <View
+                  style={{
+                    shadowColor: "#E8A838",
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.7,
+                    shadowRadius: 24,
+                    elevation: 12,
+                  }}
+                >
+                  <Ionicons name="checkmark-circle" size={72} color={colors.primary} />
+                </View>
+              </Animated.View>
+            </View>
             {/* Double-tap discovery hint */}
             {showDoubleTapHint && (
               <Animated.View
