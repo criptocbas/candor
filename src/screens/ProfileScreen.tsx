@@ -198,7 +198,7 @@ export function ProfileScreen() {
   };
 
   // ─── List header ──────────────────────────────────────────────────
-  const renderHeader = () => (
+  const headerElement = (
     <View className="px-4 gap-5 pb-4">
       {/* Profile header row */}
       <View className="flex-row items-start justify-between">
@@ -481,7 +481,7 @@ export function ProfileScreen() {
         renderItem={renderPhotoTile}
         keyExtractor={(item) => item.id}
         numColumns={NUM_COLUMNS}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={headerElement}
         contentContainerStyle={{ paddingHorizontal: SCREEN_PAD, paddingBottom: 24 }}
         refreshControl={
           <RefreshControl
@@ -503,6 +503,7 @@ export function ProfileScreen() {
           </View>
         }
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       />
     </View>
   );
