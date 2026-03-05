@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotifications, useMarkNotificationsRead } from "../hooks/useNotifications";
 import { useWallet } from "../hooks/useWallet";
+import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "../components/ui/Avatar";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
 import { SkeletonLoader } from "../components/ui/SkeletonLoader";
@@ -191,11 +192,12 @@ export function NotificationsScreen() {
         )}
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center px-8 pt-32 gap-4">
+            <Ionicons name="notifications-off-outline" size={40} color={colors.textTertiary} />
             <Text className="text-text-primary text-lg font-display-semibold text-center">
               No notifications yet
             </Text>
             <Text className="text-text-tertiary text-sm text-center leading-5">
-              When someone vouches or follows you, it'll show up here.
+              Vouch for photos and follow creators — when they vouch or follow you back, you'll see it here.
             </Text>
           </View>
         }

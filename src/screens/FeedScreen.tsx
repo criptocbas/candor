@@ -239,15 +239,26 @@ export function FeedScreen() {
           ListEmptyComponent={
             feedView === "following" ? (
               <View className="flex-1 items-center justify-center px-8 pt-32 gap-4">
+                <Ionicons name="people-outline" size={40} color={colors.textTertiary} />
                 <Text className="text-text-primary text-lg font-display-semibold text-center">
-                  No photos from followed users
+                  Your feed is empty
                 </Text>
                 <Text className="text-text-tertiary text-sm text-center leading-5">
-                  Follow some creators to see their photos here.
+                  Follow creators to see their verified photos here.
                 </Text>
+                <AnimatedPressable
+                  haptic="light"
+                  onPress={() => setFeedView("explore")}
+                  className="bg-primary rounded-full px-6 py-3 mt-2"
+                >
+                  <Text className="text-background font-display-semibold text-sm">
+                    Discover Creators
+                  </Text>
+                </AnimatedPressable>
               </View>
             ) : (
               <View className="flex-1 items-center justify-center px-8 pt-32 gap-4">
+                <Ionicons name="camera-outline" size={40} color={colors.textTertiary} />
                 <Text className="text-text-primary text-lg font-display-semibold text-center">
                   No photos yet
                 </Text>

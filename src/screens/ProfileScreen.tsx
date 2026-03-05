@@ -502,12 +502,22 @@ export function ProfileScreen() {
         }
         ListEmptyComponent={
           <View className="items-center justify-center px-8 py-16 gap-4">
+            <Ionicons name="camera-outline" size={40} color={colors.textTertiary} />
             <Text className="text-text-primary text-lg font-display-semibold text-center">
               No photos yet
             </Text>
             <Text className="text-text-tertiary text-sm text-center leading-5">
               Capture your first verified moment!
             </Text>
+            <AnimatedPressable
+              haptic="light"
+              onPress={() => navigation.getParent()?.navigate("Camera")}
+              className="bg-primary rounded-full px-6 py-3 mt-2"
+            >
+              <Text className="text-background font-display-semibold text-sm">
+                Open Camera
+              </Text>
+            </AnimatedPressable>
           </View>
         }
         showsVerticalScrollIndicator={false}
