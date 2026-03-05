@@ -17,6 +17,7 @@ import { ConnectionProvider } from "./src/utils/ConnectionProvider";
 import { ClusterProvider } from "./src/components/cluster/cluster-data-access";
 import { AppNavigator } from "./src/navigators/AppNavigator";
 import { OfflineBanner } from "./src/components/ui/OfflineBanner";
+import { ErrorBoundary } from "./src/components/ErrorBoundary";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,17 +41,19 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <QueryClientProvider client={queryClient}>
-        <ClusterProvider>
-          <ConnectionProvider config={{ commitment: "confirmed" }}>
-            <SafeAreaProvider>
-              <AppNavigator />
-              <OfflineBanner />
-            </SafeAreaProvider>
-          </ConnectionProvider>
-        </ClusterProvider>
-      </QueryClientProvider>
-    </View>
+    <ErrorBoundary>
+      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+        <QueryClientProvider client={queryClient}>
+          <ClusterProvider>
+            <ConnectionProvider config={{ commitment: "confirmed" }}>
+              <SafeAreaProvider>
+                <AppNavigator />
+                <OfflineBanner />
+              </SafeAreaProvider>
+            </ConnectionProvider>
+          </ClusterProvider>
+        </QueryClientProvider>
+      </View>
+    </ErrorBoundary>
   );
 }
