@@ -4,6 +4,7 @@ import {
   PublicKey,
   Transaction,
   SystemProgram,
+  ComputeBudgetProgram,
 } from "@solana/web3.js";
 import { PROGRAM_ID, getPhotoRecordPDA, getVouchRecordPDA } from "./solana";
 
@@ -97,6 +98,10 @@ export function buildVerifyPhotoTransaction(
   tx.recentBlockhash = recentBlockhash;
   tx.feePayer = creator;
 
+  // Set compute budget for mainnet reliability
+  tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }));
+  tx.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1_000 }));
+
   // Build the instruction data manually for Anchor
   // Discriminator (8 bytes) + imageHash (32 bytes) + lat (8) + lng (8) + timestamp (8)
   const discriminator = Buffer.from(
@@ -135,11 +140,15 @@ export function buildVouchTransaction(
   recentBlockhash: string
 ): Transaction {
   const [vouchRecordPDA] = getVouchRecordPDA(voucher, photoRecordPDA);
-  const amount = new BN(amountLamports);
+  const amount = new BN(amountLamports.toString());
 
   const tx = new Transaction();
   tx.recentBlockhash = recentBlockhash;
   tx.feePayer = voucher;
+
+  // Set compute budget for mainnet reliability
+  tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }));
+  tx.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1_000 }));
 
   // Build the instruction data manually for Anchor
   // Discriminator (8 bytes) + amount (8 bytes)

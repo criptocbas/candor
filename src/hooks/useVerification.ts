@@ -105,6 +105,7 @@ export function useVerification() {
               latitude: metadata.latitude,
               longitude: metadata.longitude,
               location_accuracy: metadata.locationAccuracy,
+              is_location_mocked: metadata.isMocked,
               verification_tx: txSignature,
             });
             if (insertError) throw insertError;

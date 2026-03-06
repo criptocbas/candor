@@ -124,12 +124,8 @@ export function useVouch() {
               tx_signature: txSignature,
             });
             if (insertError) throw insertError;
-
-            const { error: rpcError } = await supabase.rpc("increment_vouch", {
-              p_photo_id: photoId,
-              p_amount: amountLamports,
-            });
-            if (rpcError) throw rpcError;
+            // vouch_count and total_earned_lamports are updated automatically
+            // by the auto_increment_vouch trigger on vouches INSERT.
 
             dbWriteSucceeded = true;
             break;

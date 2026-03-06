@@ -6,6 +6,9 @@ declare_id!("HDvUruses5D2tPCUZnhkLiR4GB2B49GwkpjJJUKjCAvw");
 /// Maximum vouch amount: 5 SOL (matches client-side BoostModal cap)
 const MAX_VOUCH_LAMPORTS: u64 = 5_000_000_000;
 
+/// Maximum allowed clock drift for photo timestamps (5 minutes)
+const MAX_TIMESTAMP_DRIFT_SECONDS: i64 = 300;
+
 #[program]
 pub mod candor_program {
     use super::*;
@@ -19,6 +22,14 @@ pub mod candor_program {
         longitude: i64,  // Fixed-point: actual * 1e7
         timestamp: i64,
     ) -> Result<()> {
+        // Validate timestamp is within ±5 minutes of cluster clock
+        let clock = Clock::get()?;
+        let drift = (timestamp - clock.unix_timestamp).abs();
+        require!(
+            drift <= MAX_TIMESTAMP_DRIFT_SECONDS,
+            CandorError::TimestampOutOfRange
+        );
+
         let photo = &mut ctx.accounts.photo_record;
         photo.creator = ctx.accounts.creator.key();
         photo.image_hash = image_hash;
@@ -176,4 +187,6 @@ pub enum CandorError {
     InvalidCreator,
     #[msg("Arithmetic overflow")]
     Overflow,
+    #[msg("Timestamp is too far from current cluster time (max ±5 minutes)")]
+    TimestampOutOfRange,
 }
