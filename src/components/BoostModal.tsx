@@ -10,7 +10,9 @@ import {
 import * as Haptics from "expo-haptics";
 import { AnimatedPressable } from "./ui/AnimatedPressable";
 import { colors } from "../theme/colors";
-import { solToLamports } from "../utils/format";
+import { solToLamports, formatUSD } from "../utils/format";
+import { useSolPrice } from "../hooks/useEarnings";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const PRESETS = [0.05, 0.1, 0.25, 0.5] as const;
 const MIN_SOL = 0.01;
@@ -31,6 +33,7 @@ export function BoostModal({
   isLoading,
   creatorName,
 }: BoostModalProps) {
+  const { data: solPrice } = useSolPrice();
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
   const [useCustom, setUseCustom] = useState(false);
   const [customValue, setCustomValue] = useState("");
@@ -119,6 +122,17 @@ export function BoostModal({
                   >
                     {amount} SOL
                   </Text>
+                  {solPrice ? (
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        color: isSelected ? "rgba(10,10,15,0.6)" : colors.textTertiary,
+                        marginTop: 1,
+                      }}
+                    >
+                      {formatUSD(amount * LAMPORTS_PER_SOL, solPrice)}
+                    </Text>
+                  ) : null}
                 </View>
               </AnimatedPressable>
             );
@@ -185,7 +199,14 @@ export function BoostModal({
                 }`}
               >
                 {canConfirm
-                  ? `Send ${useCustom ? parsedCustom : selectedPreset} SOL`
+                  ? `Send ${useCustom ? parsedCustom : selectedPreset} SOL${
+                      solPrice
+                        ? ` (${formatUSD(
+                            (useCustom ? parsedCustom : selectedPreset!) * LAMPORTS_PER_SOL,
+                            solPrice
+                          )})`
+                        : ""
+                    }`
                   : "Select an amount"}
               </Text>
             )}

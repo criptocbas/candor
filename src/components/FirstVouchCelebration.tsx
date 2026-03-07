@@ -11,7 +11,8 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { formatSOL } from "../utils/format";
+import { formatSOL, formatUSD } from "../utils/format";
+import { useSolPrice } from "../hooks/useEarnings";
 import { colors } from "../theme/colors";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -71,6 +72,7 @@ export function FirstVouchCelebration({
   amountLamports,
   onDismiss,
 }: FirstVouchCelebrationProps) {
+  const { data: solPrice } = useSolPrice();
   const backdropOpacity = useSharedValue(0);
   const contentScale = useSharedValue(0.5);
   const contentOpacity = useSharedValue(0);
@@ -224,8 +226,20 @@ export function FirstVouchCelebration({
                   textAlign: "center",
                 }}
               >
-                +{formatSOL(amountLamports)} SOL
+                +{formatSOL(amountLamports)}
               </Text>
+              {solPrice ? (
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: colors.textSecondary,
+                    textAlign: "center",
+                    marginTop: 4,
+                  }}
+                >
+                  {formatUSD(amountLamports, solPrice)}
+                </Text>
+              ) : null}
             </View>
           </Animated.View>
 

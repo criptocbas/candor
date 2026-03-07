@@ -12,8 +12,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "./ui/Avatar";
 import { AnimatedPressable } from "./ui/AnimatedPressable";
-import { useTopCreators } from "../hooks/useEarnings";
-import { truncateAddress } from "../utils/format";
+import { useTopCreators, useSolPrice } from "../hooks/useEarnings";
+import { truncateAddress, formatUSD } from "../utils/format";
 import { colors } from "../theme/colors";
 import { RootStackParamList } from "../types";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -64,6 +64,7 @@ function CreatorCard({
   walletAddress,
   totalEarned,
   vouchCount,
+  solPrice,
   index,
 }: {
   rank: number;
@@ -72,6 +73,7 @@ function CreatorCard({
   walletAddress: string;
   totalEarned: number;
   vouchCount: number;
+  solPrice: number | null;
   index: number;
 }) {
   const navigation =
@@ -165,6 +167,13 @@ function CreatorCard({
             </Text>
           </View>
 
+          {/* USD equivalent */}
+          {solPrice ? (
+            <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: -4 }}>
+              {formatUSD(totalEarned, solPrice)}
+            </Text>
+          ) : null}
+
           {/* Vouch count */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <Ionicons name="heart" size={11} color={colors.textTertiary} />
@@ -180,6 +189,7 @@ function CreatorCard({
 
 export function CreatorLeaderboard() {
   const { data: creators, isLoading } = useTopCreators(10);
+  const { data: solPrice } = useSolPrice();
 
   // Don't render anything if no data or loading
   if (isLoading || !creators || creators.length === 0) return null;
@@ -248,6 +258,7 @@ export function CreatorLeaderboard() {
             walletAddress={creator.wallet_address}
             totalEarned={creator.total_earned}
             vouchCount={creator.vouch_count}
+            solPrice={solPrice ?? null}
             index={index}
           />
         ))}

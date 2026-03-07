@@ -11,7 +11,8 @@ import { Avatar } from "../components/ui/Avatar";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
 import { ErrorState } from "../components/ui/ErrorState";
 import { SkeletonLoader } from "../components/ui/SkeletonLoader";
-import { timeAgo, truncateAddress, formatSOL } from "../utils/format";
+import { timeAgo, truncateAddress, formatSOL, formatUSD } from "../utils/format";
+import { useSolPrice } from "../hooks/useEarnings";
 import { colors } from "../theme/colors";
 import { Notification, RootStackParamList } from "../types";
 
@@ -22,6 +23,7 @@ export function NotificationsScreen() {
   const { walletAddress } = useWallet();
   const { data: notifications, isLoading, isRefetching, isError } = useNotifications(walletAddress);
   const { markRead } = useMarkNotificationsRead();
+  const { data: solPrice } = useSolPrice();
   const queryClient = useQueryClient();
 
   const groupedNotifications = React.useMemo(() => {
@@ -118,6 +120,11 @@ export function NotificationsScreen() {
                   <Text> vouched </Text>
                   <Text style={{ color: colors.primary, fontWeight: "600" }}>
                     {formatSOL(item.amount_lamports ?? 0)}
+                    {solPrice ? (
+                      <Text style={{ color: colors.textTertiary, fontWeight: "400", fontSize: 12 }}>
+                        {" "}({formatUSD(item.amount_lamports ?? 0, solPrice)})
+                      </Text>
+                    ) : null}
                   </Text>
                   <Text> on your photo</Text>
                 </>

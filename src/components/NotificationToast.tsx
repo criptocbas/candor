@@ -10,7 +10,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Avatar } from "./ui/Avatar";
-import { formatSOL } from "../utils/format";
+import { formatSOL, formatUSD } from "../utils/format";
+import { useSolPrice } from "../hooks/useEarnings";
 import { colors } from "../theme/colors";
 import { Notification, RootStackParamList } from "../types";
 
@@ -30,6 +31,7 @@ export function NotificationToast({
   const opacity = useSharedValue(0);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { data: solPrice } = useSolPrice();
 
   useEffect(() => {
     if (visible && notification) {
@@ -125,6 +127,11 @@ export function NotificationToast({
                   <Text style={{ color: colors.primary, fontWeight: "700" }}>
                     {formatSOL(notification.amount_lamports ?? 0)}
                   </Text>
+                  {solPrice ? (
+                    <Text style={{ color: colors.textTertiary }}>
+                      {" "}({formatUSD(notification.amount_lamports ?? 0, solPrice)})
+                    </Text>
+                  ) : null}
                   {" on your photo"}
                 </>
               ) : (

@@ -17,9 +17,10 @@ import { VouchButton } from "./VouchButton";
 import { Avatar } from "./ui/Avatar";
 import { AnimatedPressable } from "./ui/AnimatedPressable";
 import { Photo, RootStackParamList } from "../types";
-import { timeAgo, truncateAddress, formatSOL } from "../utils/format";
+import { timeAgo, truncateAddress, formatSOL, formatUSD } from "../utils/format";
 import { colors } from "../theme/colors";
 import { useDoubleTap } from "../hooks/useDoubleTap";
+import { useSolPrice } from "../hooks/useEarnings";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SCREEN_PADDING = 16;
@@ -52,6 +53,7 @@ export function PhotoCard({
 }: PhotoCardProps) {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { data: solPrice } = useSolPrice();
   const creatorName =
     photo.creator?.display_name || truncateAddress(photo.creator_wallet);
 
@@ -304,6 +306,11 @@ export function PhotoCard({
               {photo.total_earned_lamports > 0 && (
                 <Text className="text-primary text-xs font-semibold">
                   {formatSOL(photo.total_earned_lamports)} earned
+                  {solPrice ? (
+                    <Text className="text-text-tertiary text-xs font-normal">
+                      {" "}({formatUSD(photo.total_earned_lamports, solPrice)})
+                    </Text>
+                  ) : null}
                 </Text>
               )}
             </View>

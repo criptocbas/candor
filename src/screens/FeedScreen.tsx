@@ -17,8 +17,9 @@ import { ErrorState } from "../components/ui/ErrorState";
 import { useFeedPhotos, useFollowingFeedPhotos, useRefreshFeed, useUserVouchedPhotoIds } from "../hooks/usePhotos";
 import { useVouch } from "../hooks/useVouch";
 import { useWallet } from "../hooks/useWallet";
+import { useSolPrice } from "../hooks/useEarnings";
 import { Photo, RootStackParamList } from "../types";
-import { formatSOL } from "../utils/format";
+import { formatSOL, formatUSD } from "../utils/format";
 import { colors } from "../theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -67,6 +68,7 @@ export function FeedScreen() {
   const refreshFeed = useRefreshFeed();
   const { vouch, isVouching, error, clearError, defaultAmount, lastSuccess, clearSuccess } = useVouch();
   const { data: vouchedPhotoIds } = useUserVouchedPhotoIds(walletAddress);
+  const { data: solPrice } = useSolPrice();
   const [vouchingPhotoId, setVouchingPhotoId] = useState<string | null>(null);
   const [feedView, setFeedView] = useState<FeedView>("explore");
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -294,7 +296,7 @@ export function FeedScreen() {
       <ConfirmationModal
         visible={pendingVouchPhoto !== null}
         title="Vouch for this photo?"
-        message={`This will send ${formatSOL(defaultAmount)} SOL to the creator.`}
+        message={`This will send ${formatSOL(defaultAmount)}${solPrice ? ` (${formatUSD(defaultAmount, solPrice)})` : ""} to the creator.`}
         confirmLabel="Vouch"
         onConfirm={confirmVouch}
         onCancel={() => setPendingVouchPhoto(null)}

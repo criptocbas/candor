@@ -26,6 +26,7 @@ import Animated, {
 import { usePhotoDetail, usePhotoVouches } from "../hooks/usePhotos";
 import { useVouch } from "../hooks/useVouch";
 import { useWallet } from "../hooks/useWallet";
+import { useSolPrice } from "../hooks/useEarnings";
 import { VerificationBadge } from "../components/VerificationBadge";
 import { VouchButton } from "../components/VouchButton";
 import { Avatar } from "../components/ui/Avatar";
@@ -39,6 +40,7 @@ import {
   truncateAddress,
   timeAgo,
   formatSOL,
+  formatUSD,
 } from "../utils/format";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
@@ -59,6 +61,7 @@ export function PhotoDetailScreen() {
   const { data: vouches } = usePhotoVouches(photoId);
   const { vouch, isVouching, error, clearError, defaultAmount, lastSuccess, clearSuccess } = useVouch();
   const { walletAddress } = useWallet();
+  const { data: solPrice } = useSolPrice();
   const [boostModalVisible, setBoostModalVisible] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showVouchConfirm, setShowVouchConfirm] = useState(false);
@@ -312,6 +315,11 @@ export function PhotoDetailScreen() {
               <View className="bg-surface rounded-xl px-3.5 py-2">
                 <Text className="text-primary font-display-semibold text-sm">
                   {formatSOL(photo.total_earned_lamports)} earned
+                  {solPrice ? (
+                    <Text className="text-text-tertiary font-normal text-xs">
+                      {" "}({formatUSD(photo.total_earned_lamports, solPrice)})
+                    </Text>
+                  ) : null}
                 </Text>
               </View>
             )}
@@ -399,6 +407,11 @@ export function PhotoDetailScreen() {
                   <View className="flex-row items-center gap-2">
                     <Text className="text-primary text-sm font-display-semibold">
                       {formatSOL(v.amount_lamports)}
+                      {solPrice ? (
+                        <Text className="text-text-tertiary font-normal text-xs">
+                          {" "}({formatUSD(v.amount_lamports, solPrice)})
+                        </Text>
+                      ) : null}
                     </Text>
                     <Text className="text-text-tertiary text-xs">
                       {timeAgo(v.created_at)}
@@ -420,7 +433,7 @@ export function PhotoDetailScreen() {
     <ConfirmationModal
       visible={showVouchConfirm}
       title="Vouch for this photo?"
-      message={`This will send ${formatSOL(defaultAmount)} SOL to the creator.`}
+      message={`This will send ${formatSOL(defaultAmount)}${solPrice ? ` (${formatUSD(defaultAmount, solPrice)})` : ""} to the creator.`}
       confirmLabel="Vouch"
       onConfirm={confirmVouch}
       onCancel={() => setShowVouchConfirm(false)}

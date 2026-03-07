@@ -7,7 +7,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { formatSOL } from "../../utils/format";
+import { formatSOL, formatUSD } from "../../utils/format";
+import { useSolPrice } from "../../hooks/useEarnings";
 import { colors } from "../../theme/colors";
 
 interface VouchSuccessToastProps {
@@ -22,6 +23,7 @@ export function VouchSuccessToast({
   onDismiss,
 }: VouchSuccessToastProps) {
   const insets = useSafeAreaInsets();
+  const { data: solPrice } = useSolPrice();
   const translateY = useSharedValue(80);
   const opacity = useSharedValue(0);
 
@@ -91,6 +93,17 @@ export function VouchSuccessToast({
           }}
         >
           {formatSOL(amount)}
+          {solPrice ? (
+            <Text
+              style={{
+                color: colors.textTertiary,
+                fontSize: 12,
+                fontWeight: "400",
+              }}
+            >
+              {" "}({formatUSD(amount, solPrice)})
+            </Text>
+          ) : null}
         </Text>
       </View>
     </Animated.View>
