@@ -168,7 +168,7 @@ export function useVouch() {
         setIsVouching(false);
       }
     },
-    [connection, publicKey, walletAddress, signAndSendTransaction]
+    [connection, publicKey, walletAddress, signAndSendTransaction, queryClient]
   );
 
   return {

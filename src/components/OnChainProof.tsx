@@ -133,7 +133,6 @@ export function OnChainProof({
   const [error, setError] = useState<string | null>(null);
   const [hasVerified, setHasVerified] = useState(false);
 
-  const containerScale = useSharedValue(1);
   const resultOpacity = useSharedValue(0);
   const resultTranslateY = useSharedValue(8);
 

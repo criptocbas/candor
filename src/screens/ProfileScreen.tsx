@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  RefreshControl,
-  Dimensions,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TextInput, FlatList, RefreshControl, Dimensions, Alert, ActivityIndicator } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 // Dynamically imported in handlePickAvatar — requires EAS rebuild to work

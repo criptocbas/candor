@@ -6,7 +6,7 @@ export const colors = {
   primary: "#E8A838",
   textPrimary: "#F0EDEA",
   textSecondary: "#999999",
-  textTertiary: "#808080",
+  textTertiary: "#666666",
   success: "#4ADE80",
-  error: "#CF6679",
+  error: "#EF4444",
 } as const;

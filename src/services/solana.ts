@@ -4,7 +4,7 @@ import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 export const CLUSTER = "devnet" as const;
 export const ENDPOINT = clusterApiUrl(CLUSTER);
 
-// TODO: Replace with your deployed program ID from Solana Playground
+// Candor program deployed on devnet
 export const PROGRAM_ID = new PublicKey(
   "HDvUruses5D2tPCUZnhkLiR4GB2B49GwkpjJJUKjCAvw"
 );
