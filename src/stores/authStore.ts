@@ -7,10 +7,12 @@ interface AuthState {
   walletAddress: string | null;
   displayName: string;
   isOnboarded: boolean;
+  hasSeenFirstVouchCelebration: boolean;
 
   setWalletAddress: (address: string | null) => void;
   setDisplayName: (name: string) => void;
   setOnboarded: (value: boolean) => void;
+  setFirstVouchCelebrationSeen: () => void;
   reset: () => void;
 }
 
@@ -20,15 +22,18 @@ export const useAuthStore = create<AuthState>()(
       walletAddress: null,
       displayName: "Anon",
       isOnboarded: false,
+      hasSeenFirstVouchCelebration: false,
 
       setWalletAddress: (address) => set({ walletAddress: address }),
       setDisplayName: (name) => set({ displayName: name }),
       setOnboarded: (value) => set({ isOnboarded: value }),
+      setFirstVouchCelebrationSeen: () => set({ hasSeenFirstVouchCelebration: true }),
       reset: () =>
         set({
           walletAddress: null,
           displayName: "Anon",
           isOnboarded: false,
+          hasSeenFirstVouchCelebration: false,
         }),
     }),
     {

@@ -10,9 +10,12 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCamera } from "../hooks/useCamera";
 import { useVerification } from "../hooks/useVerification";
 import { useWallet } from "../hooks/useWallet";
+import { useStreak } from "../hooks/useStreak";
+import { StreakBadge } from "../components/StreakBadge";
 import { VerificationFlow } from "../components/VerificationFlow";
 import { VerificationBadge } from "../components/VerificationBadge";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
@@ -31,7 +34,9 @@ export function CameraScreen() {
     clearCapture,
   } = useCamera();
   const { verifyAndUpload, isVerifying, error, clearError, verificationStep, resetStep } = useVerification();
-  const { connected } = useWallet();
+  const { connected, walletAddress } = useWallet();
+  const { data: streak } = useStreak(walletAddress);
+  const queryClient = useQueryClient();
   const [caption, setCaption] = useState("");
   const [facing, setFacing] = useState<"front" | "back">("back");
   const [includeLocation, setIncludeLocation] = useState(false);
@@ -138,6 +143,15 @@ export function CameraScreen() {
             <Text className="text-text-primary font-display-bold text-xl mt-4">
               Verified & Posted
             </Text>
+            {streak && streak.currentStreak > 0 && (
+              <View style={{ marginTop: 12 }}>
+                <StreakBadge
+                  currentStreak={streak.currentStreak}
+                  verifiedToday={true}
+                  size="md"
+                />
+              </View>
+            )}
             <Text className="text-text-tertiary text-xs mt-3">
               Tap to dismiss
             </Text>
@@ -196,6 +210,8 @@ export function CameraScreen() {
                     Haptics.notificationAsync(
                       Haptics.NotificationFeedbackType.Success
                     );
+                    // Refresh streak data after verification
+                    queryClient.invalidateQueries({ queryKey: ["streak"] });
                     // Let the verification flow show "confirmed" for a moment
                     setTimeout(() => {
                       setShowSuccess(true);
@@ -331,6 +347,44 @@ export function CameraScreen() {
             </Text>
           </View>
         </AnimatedPressable>
+
+        {/* Streak reminder — top center */}
+        {streak && streak.currentStreak > 0 && !streak.verifiedToday && (
+          <View
+            style={{
+              position: "absolute",
+              top: insets.top + 12,
+              alignSelf: "center",
+              left: 0,
+              right: 0,
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "rgba(0,0,0,0.6)",
+                borderRadius: 16,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Text style={{ fontSize: 14 }}>{streak.currentStreak >= 7 ? "\uD83D\uDD25" : "\u26A1"}</Text>
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: 12,
+                  fontWeight: "600",
+                  fontFamily: "SpaceGrotesk_600SemiBold",
+                }}
+              >
+                Verify today to keep your {streak.currentStreak}-day streak!
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Bottom gradient + shutter */}
         <View className="absolute bottom-0 left-0 right-0 items-center">

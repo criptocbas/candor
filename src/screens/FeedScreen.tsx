@@ -176,7 +176,7 @@ export function FeedScreen() {
 
   const feedChips: { key: FeedView; label: string }[] = [
     { key: "following", label: "Following" },
-    { key: "explore", label: "Explore" },
+    { key: "explore", label: "Trending" },
     { key: "map", label: "Map" },
   ];
 

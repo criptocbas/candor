@@ -13,6 +13,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../stores/authStore";
 import { useWallet } from "../hooks/useWallet";
 import { useUnreadCount } from "../hooks/useNotifications";
+import { useRealtimeNotifications } from "../hooks/useRealtimeNotifications";
+import { NotificationToast } from "../components/NotificationToast";
+import { FirstVouchCelebration } from "../components/FirstVouchCelebration";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { CameraScreen } from "../screens/CameraScreen";
 import { FeedScreen } from "../screens/FeedScreen";
@@ -143,63 +146,92 @@ function MainTabs() {
   );
 }
 
+function RealtimeOverlays() {
+  const { walletAddress } = useWallet();
+  const {
+    toast,
+    dismissToast,
+    showFirstVouchCelebration,
+    firstVouchAmount,
+    dismissFirstVouchCelebration,
+  } = useRealtimeNotifications(walletAddress);
+
+  return (
+    <>
+      <NotificationToast
+        visible={toast.visible}
+        notification={toast.notification}
+        onDismiss={dismissToast}
+      />
+      <FirstVouchCelebration
+        visible={showFirstVouchCelebration}
+        amountLamports={firstVouchAmount}
+        onDismiss={dismissFirstVouchCelebration}
+      />
+    </>
+  );
+}
+
 export function AppNavigator() {
   const isOnboarded = useAuthStore((state) => state.isOnboarded);
 
   return (
     <NavigationContainer theme={CandorDarkTheme}>
       <StatusBar style="light" />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!isOnboarded ? (
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-        ) : (
-          <>
-            <Stack.Screen name="MainTabs" component={MainTabs} />
-            <Stack.Screen
-              name="PhotoDetail"
-              component={PhotoDetailScreen}
-              options={{
-                headerShown: true,
-                headerTitle: "Photo",
-                headerStyle: { backgroundColor: colors.surface },
-                headerTintColor: colors.textPrimary,
-                headerTitleStyle: {
-                  fontWeight: "bold",
-                  fontFamily: "SpaceGrotesk_700Bold",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="UserProfile"
-              component={UserProfileScreen}
-              options={{
-                headerShown: true,
-                headerTitle: "Profile",
-                headerStyle: { backgroundColor: colors.surface },
-                headerTintColor: colors.textPrimary,
-                headerTitleStyle: {
-                  fontWeight: "bold",
-                  fontFamily: "SpaceGrotesk_700Bold",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="UserSearch"
-              component={UserSearchScreen}
-              options={{
-                headerShown: true,
-                headerTitle: "Search",
-                headerStyle: { backgroundColor: colors.surface },
-                headerTintColor: colors.textPrimary,
-                headerTitleStyle: {
-                  fontWeight: "bold",
-                  fontFamily: "SpaceGrotesk_700Bold",
-                },
-              }}
-            />
-          </>
-        )}
-      </Stack.Navigator>
+      <View style={{ flex: 1 }}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {!isOnboarded ? (
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          ) : (
+            <>
+              <Stack.Screen name="MainTabs" component={MainTabs} />
+              <Stack.Screen
+                name="PhotoDetail"
+                component={PhotoDetailScreen}
+                options={{
+                  headerShown: true,
+                  headerTitle: "Photo",
+                  headerStyle: { backgroundColor: colors.surface },
+                  headerTintColor: colors.textPrimary,
+                  headerTitleStyle: {
+                    fontWeight: "bold",
+                    fontFamily: "SpaceGrotesk_700Bold",
+                  },
+                }}
+              />
+              <Stack.Screen
+                name="UserProfile"
+                component={UserProfileScreen}
+                options={{
+                  headerShown: true,
+                  headerTitle: "Profile",
+                  headerStyle: { backgroundColor: colors.surface },
+                  headerTintColor: colors.textPrimary,
+                  headerTitleStyle: {
+                    fontWeight: "bold",
+                    fontFamily: "SpaceGrotesk_700Bold",
+                  },
+                }}
+              />
+              <Stack.Screen
+                name="UserSearch"
+                component={UserSearchScreen}
+                options={{
+                  headerShown: true,
+                  headerTitle: "Search",
+                  headerStyle: { backgroundColor: colors.surface },
+                  headerTintColor: colors.textPrimary,
+                  headerTitleStyle: {
+                    fontWeight: "bold",
+                    fontFamily: "SpaceGrotesk_700Bold",
+                  },
+                }}
+              />
+            </>
+          )}
+        </Stack.Navigator>
+        {isOnboarded && <RealtimeOverlays />}
+      </View>
     </NavigationContainer>
   );
 }

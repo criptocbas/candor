@@ -27,6 +27,8 @@ import { useWallet } from "../hooks/useWallet";
 import { useUserPhotos, useUserInfo } from "../hooks/usePhotos";
 import { useEarnings, useSolPrice } from "../hooks/useEarnings";
 import { useFollowCounts } from "../hooks/useFollow";
+import { useStreak } from "../hooks/useStreak";
+import { StreakBadge } from "../components/StreakBadge";
 import { useAuthStore } from "../stores/authStore";
 import { supabase } from "../services/supabase";
 import { uploadAvatar } from "../services/verification";
@@ -69,6 +71,7 @@ export function ProfileScreen() {
   const { data: earnings, isRefetching: isRefetchingEarnings } = useEarnings(walletAddress);
   const { data: solPrice } = useSolPrice();
   const { data: followCounts } = useFollowCounts(walletAddress);
+  const { data: streak } = useStreak(walletAddress);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const isRefreshing = isRefetchingPhotos || isRefetchingEarnings;
 
@@ -76,6 +79,7 @@ export function ProfileScreen() {
     queryClient.invalidateQueries({ queryKey: ["photos", "user", walletAddress] });
     queryClient.invalidateQueries({ queryKey: ["earnings", walletAddress] });
     queryClient.invalidateQueries({ queryKey: ["sol-price"] });
+    queryClient.invalidateQueries({ queryKey: ["streak", walletAddress] });
   };
 
   // Earnings card entrance animation
@@ -318,11 +322,20 @@ export function ProfileScreen() {
         </AnimatedPressable>
       </View>
 
-      {/* Follower / Following counts */}
-      <Text className="text-text-tertiary text-xs">
-        {followCounts?.followers ?? 0} Followers{" · "}
-        {followCounts?.following ?? 0} Following
-      </Text>
+      {/* Follower / Following counts + Streak */}
+      <View className="flex-row items-center justify-between">
+        <Text className="text-text-tertiary text-xs">
+          {followCounts?.followers ?? 0} Followers{" · "}
+          {followCounts?.following ?? 0} Following
+        </Text>
+        {streak && streak.currentStreak > 0 && (
+          <StreakBadge
+            currentStreak={streak.currentStreak}
+            verifiedToday={streak.verifiedToday}
+            size="sm"
+          />
+        )}
+      </View>
 
       {/* Earnings card */}
       <Animated.View style={cardEntranceStyle}>

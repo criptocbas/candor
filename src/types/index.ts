@@ -5,6 +5,9 @@ export interface User {
   wallet_address: string;
   display_name: string;
   avatar_url: string | null;
+  current_streak: number;
+  longest_streak: number;
+  last_verified_date: string | null;
   created_at: string;
 }
 

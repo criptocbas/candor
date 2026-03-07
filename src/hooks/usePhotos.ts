@@ -18,7 +18,21 @@ export function useFeedPhotos() {
         .limit(50);
 
       if (error) throw error;
-      return data ?? [];
+      const photos = data ?? [];
+
+      // Sort by vouch velocity (Reddit-style hot ranking)
+      // Score = vouch_count / (age_in_hours + 2)
+      // New photos with a few vouches rank above old photos with many
+      const now = Date.now();
+      return photos.sort((a, b) => {
+        const ageA = (now - new Date(a.created_at).getTime()) / 3600000 + 2;
+        const ageB = (now - new Date(b.created_at).getTime()) / 3600000 + 2;
+        const velocityA = a.vouch_count / ageA;
+        const velocityB = b.vouch_count / ageB;
+        if (velocityA !== velocityB) return velocityB - velocityA;
+        // Tiebreaker: newer first
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
     },
     staleTime: 30_000,
   });
