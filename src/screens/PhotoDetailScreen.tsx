@@ -8,6 +8,7 @@ import {
   Alert,
   Pressable,
   ActivityIndicator,
+  Share,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
@@ -174,6 +175,39 @@ export function PhotoDetailScreen() {
     );
   };
 
+  const handleShare = async () => {
+    if (!photo) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const creatorName = photo.creator?.display_name || truncateAddress(photo.creator_wallet, 6);
+    const hashPreview = photo.image_hash.slice(0, 16);
+    const explorerUrl = photo.verification_tx
+      ? getExplorerUrl(photo.verification_tx)
+      : null;
+
+    const message = [
+      `Verified photo by ${creatorName} on Candor`,
+      ``,
+      `SHA-256: ${hashPreview}...`,
+      photo.vouch_count > 0 ? `${photo.vouch_count} vouches | ${formatSOL(photo.total_earned_lamports)} earned` : null,
+      ``,
+      `Every pixel cryptographically sealed on Solana at capture.`,
+      explorerUrl ? `\nVerify on-chain: ${explorerUrl}` : null,
+      ``,
+      `#Candor #SolanaVerified #ProofOfCapture`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    try {
+      await Share.share({
+        message,
+        url: photo.image_url,
+      });
+    } catch (err) {
+      // User cancelled share — no action needed
+    }
+  };
+
   const handleBoost = async (amountLamports: number) => {
     const result = await vouch(
       photo.id,
@@ -273,13 +307,34 @@ export function PhotoDetailScreen() {
               )}
             </View>
           )}
-          {photo.total_earned_lamports > 0 && (
-            <View className="bg-surface rounded-xl px-3.5 py-2">
-              <Text className="text-primary font-display-semibold text-sm">
-                {formatSOL(photo.total_earned_lamports)} earned
-              </Text>
-            </View>
-          )}
+          <View className="flex-row items-center gap-2">
+            {photo.total_earned_lamports > 0 && (
+              <View className="bg-surface rounded-xl px-3.5 py-2">
+                <Text className="text-primary font-display-semibold text-sm">
+                  {formatSOL(photo.total_earned_lamports)} earned
+                </Text>
+              </View>
+            )}
+            {/* Share button */}
+            <AnimatedPressable
+              haptic="light"
+              scaleValue={0.92}
+              onPress={handleShare}
+            >
+              <View
+                className="rounded-full items-center justify-center"
+                style={{
+                  width: 36,
+                  height: 36,
+                  backgroundColor: "rgba(240,237,234,0.06)",
+                  borderWidth: 1,
+                  borderColor: "rgba(240,237,234,0.1)",
+                }}
+              >
+                <Ionicons name="share-outline" size={16} color={colors.textSecondary} />
+              </View>
+            </AnimatedPressable>
+          </View>
         </View>
 
         {/* Verification proof */}

@@ -13,7 +13,7 @@ import * as Haptics from "expo-haptics";
 import { useCamera } from "../hooks/useCamera";
 import { useVerification } from "../hooks/useVerification";
 import { useWallet } from "../hooks/useWallet";
-import { LoadingOverlay } from "../components/LoadingOverlay";
+import { VerificationFlow } from "../components/VerificationFlow";
 import { VerificationBadge } from "../components/VerificationBadge";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,7 +30,7 @@ export function CameraScreen() {
     capture,
     clearCapture,
   } = useCamera();
-  const { verifyAndUpload, isVerifying, error, clearError } = useVerification();
+  const { verifyAndUpload, isVerifying, error, clearError, verificationStep, resetStep } = useVerification();
   const { connected } = useWallet();
   const [caption, setCaption] = useState("");
   const [facing, setFacing] = useState<"front" | "back">("back");
@@ -50,7 +50,8 @@ export function CameraScreen() {
     clearCapture();
     setCaption("");
     setVerifyError(null);
-  }, [clearCapture]);
+    resetStep();
+  }, [clearCapture, resetStep]);
 
   // Ring pulse animation values
   const ringScale = useSharedValue(1);
@@ -195,10 +196,14 @@ export function CameraScreen() {
                     Haptics.notificationAsync(
                       Haptics.NotificationFeedbackType.Success
                     );
-                    setShowSuccess(true);
-                    successTimeoutRef.current = setTimeout(() => {
-                      dismissSuccess();
-                    }, 1500);
+                    // Let the verification flow show "confirmed" for a moment
+                    setTimeout(() => {
+                      setShowSuccess(true);
+                      resetStep();
+                      successTimeoutRef.current = setTimeout(() => {
+                        dismissSuccess();
+                      }, 1500);
+                    }, 1200);
                   } else {
                     Haptics.notificationAsync(
                       Haptics.NotificationFeedbackType.Error
@@ -234,6 +239,7 @@ export function CameraScreen() {
                   setCaption("");
                   setVerifyError(null);
                   clearError();
+                  resetStep();
                 }}
                 className="items-center py-2"
               >
@@ -245,7 +251,12 @@ export function CameraScreen() {
           </View>
         )}
 
-        <LoadingOverlay visible={isVerifying} />
+        {/* Verification flow animation (replaces LoadingOverlay) */}
+        <VerificationFlow
+          visible={isVerifying && verificationStep >= 0}
+          imageHash={lastCapture.imageHash}
+          currentStep={verificationStep >= 0 ? verificationStep : 0}
+        />
       </View>
     );
   }
@@ -367,12 +378,12 @@ export function CameraScreen() {
                     height: 80,
                     borderRadius: 40,
                     borderWidth: 2,
-                    borderColor: "#FFFFFF",
+                    borderColor: colors.primary,
                   },
                 ]}
               />
 
-              {/* Shutter button */}
+              {/* Shutter button — amber accent ring */}
               <AnimatedPressable
                 haptic="none"
                 scaleValue={0.88}
@@ -389,9 +400,14 @@ export function CameraScreen() {
                     height: 80,
                     borderRadius: 40,
                     borderWidth: 4,
-                    borderColor: "#FFFFFF",
+                    borderColor: colors.primary,
                     alignItems: "center",
                     justifyContent: "center",
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 12,
+                    elevation: 8,
                   }}
                 >
                   <View

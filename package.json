@@ -40,6 +40,7 @@
     "expo-image": "~2.0.7",
     "expo-image-picker": "~16.0.6",
     "expo-location": "~18.0.10",
+    "expo-sharing": "^55.0.11",
     "expo-splash-screen": "~0.29.24",
     "expo-status-bar": "~2.0.1",
     "expo-system-ui": "~4.0.9",

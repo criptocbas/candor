@@ -15,11 +15,16 @@ const DB_RETRY_DELAY_MS = 1000;
 const PROGRAM_DEPLOYED =
   PROGRAM_ID.toBase58() !== "11111111111111111111111111111111";
 
+// Verification steps for the animation UI
+// 0 = hashing, 1 = signing, 2 = broadcasting, 3 = confirmed
+export type VerificationStep = 0 | 1 | 2 | 3 | -1;
+
 export function useVerification() {
   const { connection } = useConnection();
   const { publicKey, walletAddress, signAndSendTransaction } = useWallet();
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verificationStep, setVerificationStep] = useState<VerificationStep>(-1);
 
   const verifyAndUpload = useCallback(
     async (
@@ -33,13 +38,17 @@ export function useVerification() {
 
       setIsVerifying(true);
       setError(null);
+      setVerificationStep(0); // Step 0: Hashing (already done, but visual step)
 
       try {
         let txSignature: string | null = null;
 
         // On-chain verification (only if program is deployed)
-        // Includes one retry on blockhash expiry
         if (PROGRAM_DEPLOYED) {
+          // Step 1: Signing — building and requesting wallet signature
+          await new Promise((r) => setTimeout(r, 800)); // Let hash animation play
+          setVerificationStep(1);
+
           const maxAttempts = 2;
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
@@ -56,6 +65,9 @@ export function useVerification() {
               );
 
               const slot = await connection.getSlot();
+
+              // Step 2: Broadcasting — sending to network
+              setVerificationStep(2);
               txSignature = await signAndSendTransaction(tx, slot);
 
               await connection.confirmTransaction(
@@ -79,7 +91,17 @@ export function useVerification() {
               throw sendErr;
             }
           }
+        } else {
+          // Simulate steps when program not deployed
+          await new Promise((r) => setTimeout(r, 600));
+          setVerificationStep(1);
+          await new Promise((r) => setTimeout(r, 600));
+          setVerificationStep(2);
+          await new Promise((r) => setTimeout(r, 600));
         }
+
+        // Step 3: Confirmed on-chain
+        setVerificationStep(3);
 
         // Upload image to Supabase Storage
         const imageUrl = await uploadImage(
@@ -92,8 +114,6 @@ export function useVerification() {
         await ensureUserExists(walletAddress);
 
         // Insert photo record in Supabase with retry logic.
-        // The on-chain verification and image upload already succeeded —
-        // if the DB write fails, the user still has the tx signature as proof.
         let dbWriteSucceeded = false;
         for (let attempt = 1; attempt <= MAX_DB_RETRIES; attempt++) {
           try {
@@ -139,6 +159,7 @@ export function useVerification() {
       } catch (err: any) {
         console.error("Verification failed:", err);
         setError(err.message || "Verification failed");
+        setVerificationStep(-1);
         return null;
       } finally {
         setIsVerifying(false);
@@ -147,10 +168,14 @@ export function useVerification() {
     [connection, publicKey, walletAddress, signAndSendTransaction]
   );
 
+  const resetStep = useCallback(() => setVerificationStep(-1), []);
+
   return {
     verifyAndUpload,
     isVerifying,
     error,
     clearError: () => setError(null),
+    verificationStep,
+    resetStep,
   };
 }
