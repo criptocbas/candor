@@ -28,6 +28,7 @@ import { useVouch } from "../hooks/useVouch";
 import { useWallet } from "../hooks/useWallet";
 import { useSolPrice } from "../hooks/useEarnings";
 import { VerificationBadge } from "../components/VerificationBadge";
+import { OnChainProof } from "../components/OnChainProof";
 import { VouchButton } from "../components/VouchButton";
 import { Avatar } from "../components/ui/Avatar";
 import { AnimatedPressable } from "../components/ui/AnimatedPressable";
@@ -384,6 +385,17 @@ export function PhotoDetailScreen() {
             />
           </View>
         </View>
+
+        {/* On-Chain Proof Verification */}
+        {photo.verification_tx && (
+          <OnChainProof
+            creatorWallet={photo.creator_wallet}
+            imageHash={photo.image_hash}
+            dbVouchCount={photo.vouch_count}
+            dbTotalEarned={photo.total_earned_lamports}
+            verificationTx={photo.verification_tx}
+          />
+        )}
 
         {/* Vouch list */}
         {vouches && vouches.length > 0 && (

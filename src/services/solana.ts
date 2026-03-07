@@ -33,6 +33,85 @@ export function getVouchRecordPDA(
   );
 }
 
+/**
+ * On-chain PhotoRecord data parsed from the PDA account.
+ */
+export interface OnChainPhotoRecord {
+  creator: string;
+  imageHash: string;
+  latitude: number;
+  longitude: number;
+  timestamp: number;
+  vouchCount: number;
+  totalEarned: number;
+  bump: number;
+  pdaAddress: string;
+}
+
+/**
+ * Fetch and deserialize a PhotoRecord PDA directly from Solana.
+ * This proves the on-chain data exists and matches what the app displays.
+ */
+export async function fetchPhotoRecordOnChain(
+  connection: Connection,
+  creatorWallet: string,
+  imageHashHex: string
+): Promise<OnChainPhotoRecord | null> {
+  const creator = new PublicKey(creatorWallet);
+  const imageHashBytes = Buffer.from(imageHashHex, "hex");
+  const [pda] = getPhotoRecordPDA(creator, imageHashBytes);
+
+  const accountInfo = await connection.getAccountInfo(pda);
+  if (!accountInfo || !accountInfo.data) return null;
+
+  const data = accountInfo.data;
+
+  // Skip 8-byte Anchor discriminator
+  const offset = 8;
+
+  // creator: Pubkey (32 bytes)
+  const creatorKey = new PublicKey(data.slice(offset, offset + 32));
+
+  // imageHash: [u8; 32] (32 bytes)
+  const hash = data.slice(offset + 32, offset + 64);
+  const hashHex = Buffer.from(hash).toString("hex");
+
+  // latitude: i64 (8 bytes, little-endian)
+  const latRaw = data.readBigInt64LE(offset + 64);
+  const latitude = Number(latRaw) / 1e7;
+
+  // longitude: i64 (8 bytes, little-endian)
+  const lngRaw = data.readBigInt64LE(offset + 72);
+  const longitude = Number(lngRaw) / 1e7;
+
+  // timestamp: i64 (8 bytes, little-endian)
+  const tsRaw = data.readBigInt64LE(offset + 80);
+  const timestamp = Number(tsRaw);
+
+  // vouch_count: u64 (8 bytes, little-endian)
+  const vcRaw = data.readBigUInt64LE(offset + 88);
+  const vouchCount = Number(vcRaw);
+
+  // total_earned: u64 (8 bytes, little-endian)
+  const teRaw = data.readBigUInt64LE(offset + 96);
+  const totalEarned = Number(teRaw);
+
+  // bump: u8 (1 byte)
+  const bump = data[offset + 104];
+
+  return {
+    creator: creatorKey.toBase58(),
+    imageHash: hashHex,
+    latitude,
+    longitude,
+    timestamp,
+    vouchCount,
+    totalEarned,
+    bump,
+    pdaAddress: pda.toBase58(),
+  };
+}
+
 export function getExplorerUrl(
   signature: string,
   cluster: string = CLUSTER
