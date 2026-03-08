@@ -116,9 +116,9 @@ export function buildVerifyPhotoTransaction(
   const data = Buffer.alloc(8 + 32 + 8 + 8 + 8);
   discriminator.copy(data, 0);
   Buffer.from(imageHash).copy(data, 8);
-  latFixed.toArrayLike(Buffer, "le", 8).copy(data, 40);
-  lngFixed.toArrayLike(Buffer, "le", 8).copy(data, 48);
-  ts.toArrayLike(Buffer, "le", 8).copy(data, 56);
+  latFixed.toTwos(64).toArrayLike(Buffer, "le", 8).copy(data, 40);
+  lngFixed.toTwos(64).toArrayLike(Buffer, "le", 8).copy(data, 48);
+  ts.toTwos(64).toArrayLike(Buffer, "le", 8).copy(data, 56);
 
   tx.add({
     keys: [
