@@ -41,22 +41,16 @@ When someone believes in your photo, they **vouch** for it with real SOL that tr
 
 ## Screenshots
 
-<!-- Add screenshots of the app here. Recommended format:
 <p align="center">
-  <img src="screenshots/onboarding.png" width="200" />
-  <img src="screenshots/camera.png" width="200" />
-  <img src="screenshots/feed.png" width="200" />
-  <img src="screenshots/profile.png" width="200" />
+  <img src="assets/screenshots/intro.png" width="200" />
+  <img src="assets/screenshots/pick-username.png" width="200" />
+  <img src="assets/screenshots/verification.png" width="200" />
 </p>
 <p align="center">
-  <img src="screenshots/photo-detail.png" width="200" />
-  <img src="screenshots/verification.png" width="200" />
-  <img src="screenshots/notifications.png" width="200" />
-  <img src="screenshots/user-profile.png" width="200" />
+  <img src="assets/screenshots/feed.png" width="200" />
+  <img src="assets/screenshots/notifications.png" width="200" />
+  <img src="assets/screenshots/profile.png" width="200" />
 </p>
--->
-
-*Screenshots coming soon — place your app screenshots in `screenshots/` and uncomment the section above.*
 
 ---
 
