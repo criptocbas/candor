@@ -1,9 +1,7 @@
-import { Program, AnchorProvider, BN, Idl } from "@coral-xyz/anchor";
+import { BN, Idl } from "@coral-xyz/anchor";
 import {
-  Connection,
   PublicKey,
   Transaction,
-  TransactionInstruction,
   SystemProgram,
   ComputeBudgetProgram,
 } from "@solana/web3.js";

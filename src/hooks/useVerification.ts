@@ -75,7 +75,8 @@ export function useVerification() {
           await new Promise((r) => setTimeout(r, 800)); // Let hash animation play
           setVerificationStep(1);
 
-          const maxAttempts = 2;
+          let includeCnft = !!cnftMetadataUri;
+          const maxAttempts = 3;
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
               const { blockhash, lastValidBlockHeight } =
@@ -88,8 +89,8 @@ export function useVerification() {
                 metadata.longitude ?? 0,
                 metadata.timestamp,
                 blockhash,
-                cnftMetadataUri,
-                metadata.imageHash
+                includeCnft ? cnftMetadataUri : undefined,
+                includeCnft ? metadata.imageHash : undefined
               );
 
               const slot = await connection.getSlot();
@@ -114,6 +115,13 @@ export function useVerification() {
                 msg.includes("block height exceeded");
               if (isBlockhashError && attempt < maxAttempts) {
                 console.warn("Blockhash expired, retrying with fresh blockhash...");
+                continue;
+              }
+              // If cNFT mint caused the failure, retry without it
+              if (includeCnft && attempt < maxAttempts) {
+                console.warn("Transaction failed with cNFT mint, retrying verify-only:", msg);
+                includeCnft = false;
+                setVerificationStep(1);
                 continue;
               }
               throw sendErr;
