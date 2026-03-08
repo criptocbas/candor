@@ -13,9 +13,11 @@ export interface ConnectionProviderProps {
   config?: ConnectionConfig;
 }
 
+const DEFAULT_CONFIG: ConnectionConfig = { commitment: "confirmed" };
+
 export const ConnectionProvider: FC<ConnectionProviderProps> = ({
   children,
-  config = { commitment: "confirmed" },
+  config = DEFAULT_CONFIG,
 }) => {
   const { selectedCluster } = useCluster();
 

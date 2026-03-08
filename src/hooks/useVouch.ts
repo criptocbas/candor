@@ -41,6 +41,11 @@ export function useVouch() {
         return null;
       }
 
+      if (amountLamports <= 0) {
+        setError("Vouch amount must be greater than zero");
+        return null;
+      }
+
       if (amountLamports > MAX_VOUCH_LAMPORTS) {
         setError("Vouch amount exceeds maximum of 5 SOL");
         return null;

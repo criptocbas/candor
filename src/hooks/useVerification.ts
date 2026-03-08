@@ -110,6 +110,13 @@ export function useVerification() {
               break;
             } catch (sendErr: any) {
               const msg = sendErr.message || "";
+              // User explicitly declined — don't retry
+              const isUserCancel =
+                msg.includes("sign request declined") ||
+                msg.includes("cancelled") ||
+                msg.includes("rejected");
+              if (isUserCancel) throw sendErr;
+
               const isBlockhashError =
                 msg.includes("Blockhash not found") ||
                 msg.includes("block height exceeded");
@@ -117,7 +124,7 @@ export function useVerification() {
                 console.warn("Blockhash expired, retrying with fresh blockhash...");
                 continue;
               }
-              // If cNFT mint caused the failure, retry without it
+              // If cNFT mint may have caused the failure, retry without it
               if (includeCnft && attempt < maxAttempts) {
                 console.warn("Transaction failed with cNFT mint, retrying verify-only:", msg);
                 includeCnft = false;

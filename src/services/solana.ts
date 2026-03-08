@@ -64,6 +64,9 @@ export async function fetchPhotoRecordOnChain(
   const accountInfo = await connection.getAccountInfo(pda);
   if (!accountInfo || !accountInfo.data) return null;
 
+  // Verify the account is owned by our program
+  if (!accountInfo.owner.equals(PROGRAM_ID)) return null;
+
   const data = accountInfo.data;
 
   // Skip 8-byte Anchor discriminator
