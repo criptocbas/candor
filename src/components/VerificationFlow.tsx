@@ -54,21 +54,43 @@ interface VerificationFlowProps {
   onComplete?: () => void;
 }
 
-function HashDisplay({ hash, revealed }: { hash: string; revealed: boolean }) {
-  const displayHash = hash.slice(0, 16);
-  const charOpacities = Array.from({ length: 16 }, () => useSharedValue(0));
+function HashChar({ char, index, revealed }: { char: string; index: number; revealed: boolean }) {
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
     if (revealed) {
-      charOpacities.forEach((opacity, i) => {
-        opacity.value = withDelay(i * 60, withTiming(1, { duration: 150 }));
-      });
+      opacity.value = withDelay(index * 60, withTiming(1, { duration: 150 }));
     } else {
-      charOpacities.forEach((opacity) => {
-        opacity.value = 0;
-      });
+      opacity.value = 0;
     }
   }, [revealed]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateY: interpolate(opacity.value, [0, 1], [8, 0]) },
+    ],
+  }));
+
+  return (
+    <Animated.Text
+      style={[
+        style,
+        {
+          fontFamily: "SpaceGrotesk_600SemiBold",
+          fontSize: 13,
+          color: colors.primary,
+          letterSpacing: 1.5,
+        },
+      ]}
+    >
+      {char}
+    </Animated.Text>
+  );
+}
+
+function HashDisplay({ hash, revealed }: { hash: string; revealed: boolean }) {
+  const displayHash = hash.slice(0, 16);
 
   return (
     <View className="flex-row items-center justify-center mt-3 mb-1">
@@ -76,30 +98,9 @@ function HashDisplay({ hash, revealed }: { hash: string; revealed: boolean }) {
         className="rounded-xl px-3 py-2 flex-row"
         style={{ backgroundColor: "rgba(232,168,56,0.08)", borderWidth: 1, borderColor: "rgba(232,168,56,0.15)" }}
       >
-        {displayHash.split("").map((char, i) => {
-          const style = useAnimatedStyle(() => ({
-            opacity: charOpacities[i].value,
-            transform: [
-              { translateY: interpolate(charOpacities[i].value, [0, 1], [8, 0]) },
-            ],
-          }));
-          return (
-            <Animated.Text
-              key={i}
-              style={[
-                style,
-                {
-                  fontFamily: "SpaceGrotesk_600SemiBold",
-                  fontSize: 13,
-                  color: colors.primary,
-                  letterSpacing: 1.5,
-                },
-              ]}
-            >
-              {char}
-            </Animated.Text>
-          );
-        })}
+        {displayHash.split("").map((char, i) => (
+          <HashChar key={i} char={char} index={i} revealed={revealed} />
+        ))}
         <Text
           style={{
             fontFamily: "SpaceGrotesk_600SemiBold",
@@ -345,7 +346,7 @@ export function VerificationFlow({
   const isComplete = currentStep === 3;
 
   return (
-    <Modal visible={visible} transparent animationType="none">
+    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <Animated.View
         style={[bgStyle, { flex: 1, backgroundColor: "rgba(10,10,15,0.95)" }]}
         className="items-center justify-center px-8"

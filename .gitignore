@@ -41,3 +41,6 @@ app-example
 
 # Claude task files
 tasks/
+
+# Submission docs (screenshots, pitch, etc.)
+docs/

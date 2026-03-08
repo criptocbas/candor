@@ -129,13 +129,26 @@ export function useAuthorization() {
   );
   const authorizeSession = useCallback(
     async (wallet: AuthorizeAPI) => {
-      const authorizationResult = await wallet.authorize({
-        identity: APP_IDENTITY,
-        chain: CHAIN_IDENTIFIER,
-        auth_token: authorization?.authToken,
-      });
-      return (await handleAuthorizationResult(authorizationResult))
-        .selectedAccount;
+      try {
+        const authorizationResult = await wallet.authorize({
+          identity: APP_IDENTITY,
+          chain: CHAIN_IDENTIFIER,
+          auth_token: authorization?.authToken,
+        });
+        return (await handleAuthorizationResult(authorizationResult))
+          .selectedAccount;
+      } catch (err) {
+        // Cached auth_token might be stale — retry with fresh authorization
+        if (authorization?.authToken) {
+          const authorizationResult = await wallet.authorize({
+            identity: APP_IDENTITY,
+            chain: CHAIN_IDENTIFIER,
+          });
+          return (await handleAuthorizationResult(authorizationResult))
+            .selectedAccount;
+        }
+        throw err;
+      }
     },
     [authorization, handleAuthorizationResult]
   );

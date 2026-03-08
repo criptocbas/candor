@@ -4,7 +4,6 @@ import { useConnection } from "../utils/ConnectionProvider";
 import { useWallet } from "./useWallet";
 import { buildVerifyPhotoTransaction } from "../services/anchor";
 import { uploadImage, CaptureMetadata } from "../services/verification";
-import { uploadNftMetadata } from "../services/cnft";
 import { supabase, ensureUserExists } from "../services/supabase";
 import { PROGRAM_ID } from "../services/solana";
 import { PhotoUploadData } from "../types";
@@ -44,30 +43,12 @@ export function useVerification() {
       try {
         let txSignature: string | null = null;
 
-        // Upload image early — we need the URL for cNFT metadata
-        // This runs during the "hashing" animation, so no extra perceived delay
+        // Upload image during the "hashing" animation, so no extra perceived delay
         const imageUrl = await uploadImage(
           supabase,
           metadata.imageUri,
           walletAddress
         );
-
-        // Upload NFT metadata JSON (for cNFT mint instruction)
-        let cnftMetadataUri: string | undefined;
-        try {
-          cnftMetadataUri = await uploadNftMetadata({
-            imageUrl,
-            imageHash: metadata.imageHash,
-            caption,
-            creatorWallet: walletAddress,
-            latitude: metadata.latitude,
-            longitude: metadata.longitude,
-            timestamp: metadata.timestamp,
-          });
-        } catch (metaErr) {
-          // Non-critical: if metadata upload fails, we skip cNFT minting
-          console.error("NFT metadata upload failed (continuing without cNFT):", metaErr);
-        }
 
         // On-chain verification (only if program is deployed)
         if (PROGRAM_DEPLOYED) {
@@ -75,65 +56,32 @@ export function useVerification() {
           await new Promise((r) => setTimeout(r, 800)); // Let hash animation play
           setVerificationStep(1);
 
-          let includeCnft = !!cnftMetadataUri;
-          const maxAttempts = 3;
-          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-              const { blockhash, lastValidBlockHeight } =
-                await connection.getLatestBlockhash();
+          const { blockhash, lastValidBlockHeight } =
+            await connection.getLatestBlockhash();
 
-              const tx = buildVerifyPhotoTransaction(
-                publicKey,
-                metadata.imageHashBytes,
-                metadata.latitude ?? 0,
-                metadata.longitude ?? 0,
-                metadata.timestamp,
-                blockhash,
-                includeCnft ? cnftMetadataUri : undefined,
-                includeCnft ? metadata.imageHash : undefined
-              );
+          const tx = buildVerifyPhotoTransaction(
+            publicKey,
+            metadata.imageHashBytes,
+            metadata.latitude ?? 0,
+            metadata.longitude ?? 0,
+            metadata.timestamp,
+            blockhash
+          );
 
-              const slot = await connection.getSlot();
+          const slot = await connection.getSlot();
 
-              // Step 2: Broadcasting — sending to network
-              setVerificationStep(2);
-              txSignature = await signAndSendTransaction(tx, slot);
+          // Step 2: Broadcasting — sending to network
+          setVerificationStep(2);
+          txSignature = await signAndSendTransaction(tx, slot);
 
-              await connection.confirmTransaction(
-                {
-                  signature: txSignature,
-                  blockhash,
-                  lastValidBlockHeight,
-                },
-                "confirmed"
-              );
-              break;
-            } catch (sendErr: any) {
-              const msg = sendErr.message || "";
-              // User explicitly declined — don't retry
-              const isUserCancel =
-                msg.includes("sign request declined") ||
-                msg.includes("cancelled") ||
-                msg.includes("rejected");
-              if (isUserCancel) throw sendErr;
-
-              const isBlockhashError =
-                msg.includes("Blockhash not found") ||
-                msg.includes("block height exceeded");
-              if (isBlockhashError && attempt < maxAttempts) {
-                console.warn("Blockhash expired, retrying with fresh blockhash...");
-                continue;
-              }
-              // If cNFT mint may have caused the failure, retry without it
-              if (includeCnft && attempt < maxAttempts) {
-                console.warn("Transaction failed with cNFT mint, retrying verify-only:", msg);
-                includeCnft = false;
-                setVerificationStep(1);
-                continue;
-              }
-              throw sendErr;
-            }
-          }
+          await connection.confirmTransaction(
+            {
+              signature: txSignature,
+              blockhash,
+              lastValidBlockHeight,
+            },
+            "confirmed"
+          );
         } else {
           // Simulate steps when program not deployed
           await new Promise((r) => setTimeout(r, 600));

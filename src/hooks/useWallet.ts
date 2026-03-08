@@ -53,17 +53,19 @@ export function useWallet() {
           wallet_address: address,
           display_name: "Anon",
         });
+        // New user — stay on setup screen for username pick
       } else {
+        // Returning user — skip onboarding, go straight to the app
         setDisplayName(existingUser.display_name);
+        setOnboarded(true);
       }
 
-      setOnboarded(true);
       return account;
     } catch (error) {
       console.error("Failed to connect wallet:", error);
       throw error;
     }
-  }, [connect, setWalletAddress, setOnboarded, setDisplayName]);
+  }, [connect, setWalletAddress, setDisplayName, setOnboarded]);
 
   const disconnectWallet = useCallback(async () => {
     try {

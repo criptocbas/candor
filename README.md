@@ -13,6 +13,12 @@
   Built for <a href="https://solanamobile.radiant.nexus">MONOLITH — Solana Mobile Hackathon</a> by RadiantsDAO
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/tests-101%20passing-brightgreen" alt="101 tests passing" />
+  <img src="https://img.shields.io/badge/solana-devnet-blueviolet" alt="Solana Devnet" />
+  <img src="https://img.shields.io/badge/platform-Android-green" alt="Android" />
+</p>
+
 ---
 
 ## The Problem
@@ -23,9 +29,9 @@ Meanwhile, photographers who capture real moments give their best work to platfo
 
 ## The Solution
 
-**Candor is a mobile-first dApp where every photo is cryptographically fingerprinted and recorded on-chain the instant you tap the shutter.**
+**Candor is a mobile-first dApp where every photo is cryptographically fingerprinted, recorded on-chain, and minted as a compressed NFT the instant you tap the shutter.**
 
-The camera captures → the app computes a SHA-256 hash of the raw image bytes → the hash is submitted to a Solana smart contract → the photo is sealed. Any future modification — even a single pixel — would produce a different hash, instantly detectable.
+The camera captures → the app computes a SHA-256 hash of the raw image bytes → the hash is submitted to a Solana smart contract → the photo is minted as a compressed NFT → the photo is sealed. Any future modification — even a single pixel — would produce a different hash, instantly detectable.
 
 When someone believes in your photo, they **vouch** for it with real SOL that transfers directly from their wallet to yours. No platform fee. No middleman. No algorithm deciding who gets paid.
 
@@ -33,18 +39,42 @@ When someone believes in your photo, they **vouch** for it with real SOL that tr
 
 ---
 
+## Screenshots
+
+<!-- Add screenshots of the app here. Recommended format:
+<p align="center">
+  <img src="screenshots/onboarding.png" width="200" />
+  <img src="screenshots/camera.png" width="200" />
+  <img src="screenshots/feed.png" width="200" />
+  <img src="screenshots/profile.png" width="200" />
+</p>
+<p align="center">
+  <img src="screenshots/photo-detail.png" width="200" />
+  <img src="screenshots/verification.png" width="200" />
+  <img src="screenshots/notifications.png" width="200" />
+  <img src="screenshots/user-profile.png" width="200" />
+</p>
+-->
+
+*Screenshots coming soon — place your app screenshots in `screenshots/` and uncomment the section above.*
+
+---
+
 ## How It Works
 
-### 1. Capture & Seal
+### 1. Capture, Seal & Mint
 
 Open the camera, tap the shutter. Behind the scenes:
 
 1. Raw image bytes are read via `expo-file-system`
 2. **SHA-256 hash** is computed on-device via `expo-crypto`
 3. Optional GPS coordinates are fuzzed to ~100m for privacy
-4. The hash is submitted to Solana via the `verify_photo` instruction
-5. **MWA (Mobile Wallet Adapter)** opens Phantom for signing
-6. On-chain confirmation creates an immutable `PhotoRecord` PDA
+4. Image is uploaded to Supabase Storage
+5. **cNFT metadata** is prepared and uploaded (name, hash, GPS, timestamp)
+6. The hash is submitted to Solana via the `verify_photo` instruction
+7. A **compressed NFT** is minted via Bubblegum's `mint_v1` in the same transaction
+8. **MWA (Mobile Wallet Adapter)** opens Phantom for signing
+9. On-chain confirmation creates an immutable `PhotoRecord` PDA + cNFT
 
 The user sees a step-by-step verification animation showing each stage in real-time — hash computation, wallet signing, blockchain broadcast, and on-chain confirmation.
 
@@ -54,7 +84,15 @@ See a photo you trust? **Vouch for it.** Your SOL transfers directly from your w
 
 Vouchers put real economic value behind photos they believe in. This creates a trust signal that's impossible to fake.
 
-### 3. Earn & Rise
+### 3. Own Your Work
+
+Every verified photo is automatically minted as a **compressed NFT (cNFT)** owned by the creator. This gives photographers:
+
+- **Provable ownership** — The cNFT is in your wallet, tied to the original image hash
+- **Portability** — Your verified photos travel with your wallet across any Solana marketplace or gallery
+- **Near-zero cost** — Compressed NFTs cost ~$0.00003 to mint via Metaplex Bubblegum, compared to ~$2 for traditional NFTs
+
+### 4. Earn & Rise
 
 Every vouch is real money. The **Top Creators leaderboard** ranks photographers by total earnings — a live, transparent economy with no hidden algorithms. Your profile shows total SOL earned across all photos with a live USD conversion.
 
@@ -71,12 +109,32 @@ Every vouch is real money. The **Top Creators leaderboard** ranks photographers 
 | `verify_photo` | Creates a `PhotoRecord` PDA seeded by `[b"photo", creator, image_hash]`. Stores SHA-256 hash, GPS (fixed-point i64), timestamp. Validates timestamp within ±5 minutes of cluster clock. |
 | `vouch` | Creates a `VouchRecord` PDA seeded by `[b"vouch", voucher, photo_record]`. Transfers SOL directly from voucher to creator via system program CPI. Enforces: amount > 0, ≤ 5 SOL cap, no self-vouching, one vouch per user per photo (PDA uniqueness). Uses `checked_add` for overflow protection. |
 
-**Key technical decisions:**
-- **Manual Anchor buffer construction** instead of the `Program` class — required for MWA compatibility on React Native
+### Compressed NFT Minting (Bubblegum)
+
+Each verified photo is minted as a cNFT in the same transaction as `verify_photo`:
+
+| Component | Address |
+|-----------|---------|
+| **Bubblegum Program** | `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY` |
+| **Merkle Tree** | [`F2xrhrR3TVCFQy7mHhAqM8HLYZ6EBaSjUPdEk9B6WrLN`](https://explorer.solana.com/address/F2xrhrR3TVCFQy7mHhAqM8HLYZ6EBaSjUPdEk9B6WrLN?cluster=devnet) |
+| **Tree Capacity** | 16,384 cNFTs |
+| **Cost per Mint** | ~0.000000001 SOL |
+
+**Key implementation details:**
+- **Client-side mint instruction** — Bubblegum `mint_v1` is appended to the same transaction as `verify_photo`, avoiding CPI from the Anchor program (no redeployment required)
+- **Manual Borsh serialization** — MetadataArgs are hand-serialized to avoid Metaplex SDK compatibility issues with React Native
+- **Atomic fallback** — If cNFT minting fails (tree full, serialization issue), the transaction automatically retries with `verify_photo` only so photo verification always succeeds
+- **Public Merkle tree** — Any user can mint without needing tree creator authority
+
+### Transaction Construction
+
+**Manual Anchor buffer construction** instead of the `Program` class — required for MWA compatibility on React Native:
+
 - Instruction discriminators are hardcoded `SHA-256("global:<instruction_name>")[0..8]` prefixes
-- GPS stored as fixed-point `i64` (actual × 10⁷) for deterministic on-chain storage
+- GPS stored as fixed-point `i64` (actual × 10⁷) using two's complement encoding for signed values
+- Compute budget: 200,000 CU for verify-only, 400,000 CU when minting cNFT
+- Priority fees set on all transactions for mainnet readiness
 - **Zero intermediary** in SOL transfer — direct wallet-to-wallet via system program CPI
-- Compute budget and priority fees set on all transactions for mainnet readiness
 
 ### Mobile Client (React Native/Expo)
 
@@ -99,17 +157,18 @@ App.tsx
               UserSearchScreen      discover creators
 ```
 
-### Sealed Pipeline (capture → chain)
+### Sealed Pipeline (capture → chain → NFT)
 
 ```
 Camera Capture
   ↓ Read bytes (expo-file-system)
   ↓ SHA-256 hash (expo-crypto)
   ↓ Optional GPS (expo-location, fuzzed to ~111m)
-  ↓ Build verify_photo TX (manual Anchor buffer)
+  ↓ Upload image to Supabase Storage
+  ↓ Upload cNFT metadata JSON
+  ↓ Build verify_photo + mint_v1 TX (manual Anchor buffer + Borsh)
   ↓ MWA signs via Phantom
   ↓ On-chain confirmation (Solana devnet)
-  ↓ Upload image to Supabase Storage
   ↓ Insert photo record in database
 ```
 
@@ -119,7 +178,7 @@ Camera Capture
 - **Automatic triggers**: Vouch insert → auto-increments `vouch_count` and `total_earned_lamports` (SECURITY DEFINER)
 - **Defense in depth**: Self-vouch prevention trigger, self-follow CHECK constraint, unique display names
 - **Notification triggers**: Auto-create notifications on vouch and follow events
-- **Storage**: Image uploads restricted to `.jpg`, `.jpeg`, `.png`, `.webp` extensions via bucket policies
+- **Storage**: Image uploads + cNFT metadata JSON restricted to approved types via bucket policies
 
 ### State Management
 
@@ -139,11 +198,13 @@ Camera Capture
 | Mobile | React Native 0.76 + Expo SDK 52 + TypeScript |
 | Styling | NativeWind 4 (Tailwind CSS) + react-native-reanimated |
 | Blockchain | Solana (devnet → mainnet) + Anchor 0.28 |
+| NFTs | Metaplex Bubblegum (compressed NFTs via Merkle tree) |
 | Wallet | Solana Mobile Wallet Adapter (MWA) v2 via Phantom |
 | Database | Supabase (PostgreSQL + Storage + Row Level Security) |
 | State | TanStack React Query + Zustand |
 | Lists | @shopify/flash-list |
 | Maps | react-native-maps (Google Maps) |
+| Testing | Jest + ts-jest (101 unit tests) |
 
 ---
 
@@ -180,18 +241,60 @@ Gold glow shadows on primary actions. Spring physics on all interactive elements
 
 ---
 
+## Testing
+
+Candor includes a comprehensive test suite with **101 unit tests** covering all Solana-related logic:
+
+```bash
+yarn test
+```
+
+| Test Suite | Tests | Coverage |
+|------------|-------|----------|
+| `anchor.test.ts` | 20 | Transaction construction, discriminators, buffer layout, account ordering, GPS encoding |
+| `cnft.test.ts` | 13 | Bubblegum program IDs, tree authority PDA, mint_v1 discriminator, Borsh serialization |
+| `solana.test.ts` | 17 | PDA derivation determinism, seed correctness, curve validation |
+| `validation.test.ts` | 23 | Amount bounds, self-vouch prevention, balance checks, timestamp drift, GPS encoding |
+| `format.test.ts` | 22 | SOL formatting, USD conversion, address truncation, time display |
+| `crypto.test.ts` | 6 | Hash-to-bytes conversion, edge cases |
+
+The test suite caught a real bug during development: BN.js `toArrayLike()` writes the absolute value for negative numbers instead of two's complement. GPS coordinates in the Southern/Western hemispheres were being encoded with the wrong sign. Fixed with `BN.toTwos(64)`.
+
+---
+
 ## Security
 
-Candor underwent a full security audit with fixes applied:
+Candor underwent a full security audit following the [Solana Security Checklist](https://solanacookbook.com) with fixes applied across both the on-chain program and client code:
 
-- **RLS hardened**: Direct UPDATE on photos table blocked from anon clients — vouch counts managed exclusively by database triggers
-- **No callable RPCs**: `increment_vouch` replaced with automatic trigger on vouch insert (prevents client-side stat manipulation)
-- **Defense in depth**: Self-vouch prevention at both Anchor program level AND database trigger level
-- **On-chain timestamp validation**: Photos rejected if timestamp drifts >5 minutes from cluster clock
-- **Compute budget**: Priority fees on all transactions for mainnet congestion handling
-- **Storage policies**: Upload restricted to image file types only
+### On-Chain (Anchor Program)
+
+- **Account validation**: Typed `Account<'info, T>` with `Signer<'info>` — automatic owner and signer checks
+- **Reinitialization protection**: Uses `init` constraint (not `init_if_needed`) — prevents account overwrite attacks
+- **PDA uniqueness**: Seeds include user-specific keys — no shared PDA vulnerability
+- **CPI safety**: `Program<'info, System>` validates CPI target — prevents arbitrary CPI attacks
+- **Overflow protection**: `checked_add` on vouch_count and total_earned
+- **Data matching**: `has_one = creator` constraint validates creator matches stored PhotoRecord
+- **Amount cap**: 5 SOL maximum per vouch, enforced on-chain
+- **Timestamp validation**: ±5 minute drift check against cluster clock
+- **Self-vouch prevention**: `voucher != photo_record.creator` check
+
+### Client-Side
+
+- **Stale closure fixes**: All `useMemo`/`useCallback` dependency arrays audited and corrected
+- **User cancellation handling**: MWA signing rejection detected before retry logic
+- **cNFT fallback**: If combined verify+mint transaction fails, auto-retries with verify-only
+- **Account owner validation**: `fetchPhotoRecordOnChain` verifies account is owned by program before deserialization
+- **Input validation**: Client-side amount and self-vouch checks mirror on-chain constraints
+- **Signed integer encoding**: GPS coordinates use `BN.toTwos(64)` for correct two's complement i64
+
+### Database (Supabase)
+
+- **RLS hardened**: Direct UPDATE on photos table blocked — stats managed exclusively by database triggers
+- **No callable RPCs**: Vouch stats auto-managed by trigger on INSERT (prevents client-side manipulation)
+- **Defense in depth**: Self-vouch prevention at Anchor program, client, AND database levels
 - **Notification injection blocked**: Direct INSERT on notifications denied — only triggers create them
 - **Self-follow prevention**: CHECK constraint at database level
+- **Storage policies**: Upload restricted to image file types only
 
 ---
 
@@ -215,7 +318,10 @@ yarn
 npx expo start --dev-client
 
 # Type check
-npx tsc --noEmit
+yarn typecheck
+
+# Run tests
+yarn test
 ```
 
 ### Build
@@ -238,7 +344,7 @@ candor/
     screens/           8 screens
     components/        15 components + 8 UI primitives
     hooks/             10 custom hooks
-    services/          anchor.ts, solana.ts, supabase.ts, verification.ts
+    services/          anchor.ts, solana.ts, cnft.ts, supabase.ts, verification.ts
     stores/            Zustand auth store (AsyncStorage persist)
     navigators/        React Navigation v6 (stack + bottom tabs)
     theme/             Color tokens
@@ -246,6 +352,8 @@ candor/
     utils/             format, crypto, connection, MWA helpers
     polyfills.ts       Buffer, TextEncoder, crypto shims for React Native
   programs/candor/     Anchor program (lib.rs) — deployed to devnet
+  scripts/             Merkle tree setup script (setup-cnft-tree.cjs)
+  tests/               101 unit tests (Jest + ts-jest)
   supabase/            SQL migrations (5 files including security hardening)
   assets/              App icon, splash screen, logo
 ```
@@ -264,7 +372,9 @@ Candor is impossible without Solana Mobile. Here's why:
 
 4. **Direct SOL transfers** — Vouch payments go wallet-to-wallet via system program CPI. No smart contract escrow, no token wrapping, no bridges. The simplest possible payment path.
 
-5. **Seeker-native UX** — Haptic feedback on vouch confirmation, amber-accented dark UI optimized for OLED, full-screen camera integration.
+5. **Compressed NFTs at scale** — Bubblegum's Merkle tree architecture lets Candor mint 16,384 photo NFTs for pennies. Every verified photo becomes a portable, ownable asset in the creator's wallet.
+
+6. **Seeker-native UX** — Haptic feedback on vouch confirmation, amber-accented dark UI optimized for OLED, full-screen camera integration.
 
 ---
 

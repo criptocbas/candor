@@ -298,93 +298,94 @@ export function CameraScreen() {
           ]}
         />
 
-        {/* Flip camera — top left */}
-        <AnimatedPressable
-          haptic="light"
-          scaleValue={0.92}
-          onPress={() => setFacing(f => f === "back" ? "front" : "back")}
-          style={{ position: "absolute", top: insets.top + 12, left: 16 }}
+        {/* Top controls */}
+        <View
+          style={{
+            position: "absolute",
+            top: insets.top + 12,
+            left: 16,
+            right: 16,
+            gap: 10,
+          }}
         >
-          <View
-            className="rounded-full items-center justify-center"
-            style={{
-              width: 40,
-              height: 40,
-              backgroundColor: "rgba(0,0,0,0.5)",
-            }}
-          >
-            <Ionicons name="camera-reverse-outline" size={20} color="#FFFFFF" />
-          </View>
-        </AnimatedPressable>
-
-        {/* GPS floating pill — top right */}
-        <AnimatedPressable
-          haptic="light"
-          scaleValue={0.92}
-          onPress={() => setIncludeLocation((v) => !v)}
-          style={{ position: "absolute", top: insets.top + 12, right: 16 }}
-        >
-          <View
-            className="flex-row items-center rounded-full px-3.5 py-2.5"
-            style={{
-              backgroundColor: "rgba(0,0,0,0.5)",
-              borderWidth: 1,
-              borderColor: includeLocation ? "rgba(74,222,128,0.3)" : "transparent",
-            }}
-          >
-            <Ionicons
-              name={includeLocation ? "location" : "location-outline"}
-              size={14}
-              color={includeLocation ? colors.success : colors.textTertiary}
-              style={{ marginRight: 6 }}
-            />
-            <Text style={{
-              fontSize: 12,
-              color: includeLocation ? colors.success : colors.textSecondary,
-              fontFamily: "SpaceGrotesk_600SemiBold",
-            }}>
-              {includeLocation ? "Location on" : "Location off"}
-            </Text>
-          </View>
-        </AnimatedPressable>
-
-        {/* Streak reminder — top center */}
-        {streak && streak.currentStreak > 0 && !streak.verifiedToday && (
-          <View
-            style={{
-              position: "absolute",
-              top: insets.top + 12,
-              alignSelf: "center",
-              left: 0,
-              right: 0,
-              alignItems: "center",
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "rgba(0,0,0,0.6)",
-                borderRadius: 16,
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-              }}
+          {/* Row 1: Flip camera + GPS toggle */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <AnimatedPressable
+              haptic="light"
+              scaleValue={0.92}
+              onPress={() => setFacing(f => f === "back" ? "front" : "back")}
             >
-              <Text style={{ fontSize: 14 }}>{streak.currentStreak >= 7 ? "\uD83D\uDD25" : "\u26A1"}</Text>
-              <Text
+              <View
+                className="rounded-full items-center justify-center"
                 style={{
-                  color: colors.primary,
-                  fontSize: 12,
-                  fontWeight: "600",
-                  fontFamily: "SpaceGrotesk_600SemiBold",
+                  width: 40,
+                  height: 40,
+                  backgroundColor: "rgba(0,0,0,0.5)",
                 }}
               >
-                Verify today to keep your {streak.currentStreak}-day streak!
-              </Text>
-            </View>
+                <Ionicons name="camera-reverse-outline" size={20} color="#FFFFFF" />
+              </View>
+            </AnimatedPressable>
+
+            <AnimatedPressable
+              haptic="light"
+              scaleValue={0.92}
+              onPress={() => setIncludeLocation((v) => !v)}
+            >
+              <View
+                className="flex-row items-center rounded-full px-3.5 py-2.5"
+                style={{
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  borderWidth: 1,
+                  borderColor: includeLocation ? "rgba(74,222,128,0.3)" : "transparent",
+                }}
+              >
+                <Ionicons
+                  name={includeLocation ? "location" : "location-outline"}
+                  size={14}
+                  color={includeLocation ? colors.success : colors.textTertiary}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={{
+                  fontSize: 12,
+                  color: includeLocation ? colors.success : colors.textSecondary,
+                  fontFamily: "SpaceGrotesk_600SemiBold",
+                }}>
+                  {includeLocation ? "Location on" : "Location off"}
+                </Text>
+              </View>
+            </AnimatedPressable>
           </View>
-        )}
+
+          {/* Row 2: Streak reminder (below controls, no overlap) */}
+          {streak && streak.currentStreak > 0 && !streak.verifiedToday && (
+            <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  backgroundColor: "rgba(0,0,0,0.6)",
+                  borderRadius: 16,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Text style={{ fontSize: 14 }}>{streak.currentStreak >= 7 ? "\uD83D\uDD25" : "\u26A1"}</Text>
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontSize: 12,
+                    fontWeight: "600",
+                    fontFamily: "SpaceGrotesk_600SemiBold",
+                  }}
+                >
+                  Verify today to keep your {streak.currentStreak}-day streak!
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
 
         {/* Bottom gradient + shutter */}
         <View className="absolute bottom-0 left-0 right-0 items-center">
