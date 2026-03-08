@@ -3,10 +3,12 @@ import {
   Connection,
   PublicKey,
   Transaction,
+  TransactionInstruction,
   SystemProgram,
   ComputeBudgetProgram,
 } from "@solana/web3.js";
 import { PROGRAM_ID, getPhotoRecordPDA, getVouchRecordPDA } from "./solana";
+import { buildMintCnftInstruction } from "./cnft";
 
 // Minimal IDL for the Candor program
 // This should match the deployed program from Solana Playground
@@ -74,7 +76,8 @@ export const CANDOR_IDL: Idl = {
 };
 
 /**
- * Build a verify_photo transaction (unsigned — MWA will sign it)
+ * Build a verify_photo transaction (unsigned — MWA will sign it).
+ * Optionally includes a Bubblegum mint_v1 instruction to mint the photo as a cNFT.
  */
 export function buildVerifyPhotoTransaction(
   creator: PublicKey,
@@ -82,7 +85,9 @@ export function buildVerifyPhotoTransaction(
   latitude: number,
   longitude: number,
   timestamp: number,
-  recentBlockhash: string
+  recentBlockhash: string,
+  cnftMetadataUri?: string,
+  imageHashHex?: string
 ): Transaction {
   const [photoRecordPDA] = getPhotoRecordPDA(
     creator,
@@ -98,8 +103,9 @@ export function buildVerifyPhotoTransaction(
   tx.recentBlockhash = recentBlockhash;
   tx.feePayer = creator;
 
-  // Set compute budget for mainnet reliability
-  tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }));
+  // Compute budget: higher when minting cNFT (Merkle tree operations need more CU)
+  const computeUnits = cnftMetadataUri ? 400_000 : 200_000;
+  tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnits }));
   tx.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1_000 }));
 
   // Build the instruction data manually for Anchor
@@ -125,6 +131,18 @@ export function buildVerifyPhotoTransaction(
     programId: PROGRAM_ID,
     data,
   });
+
+  // Append Bubblegum mint_v1 instruction to mint the photo as a cNFT
+  if (cnftMetadataUri && imageHashHex) {
+    try {
+      const mintIx = buildMintCnftInstruction(creator, cnftMetadataUri, imageHashHex);
+      tx.add(mintIx);
+    } catch (err) {
+      // cNFT minting is non-critical — if instruction building fails,
+      // we still verify the photo on-chain without the NFT mint
+      console.error("Failed to build cNFT mint instruction:", err);
+    }
+  }
 
   return tx;
 }

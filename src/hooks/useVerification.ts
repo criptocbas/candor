@@ -4,6 +4,7 @@ import { useConnection } from "../utils/ConnectionProvider";
 import { useWallet } from "./useWallet";
 import { buildVerifyPhotoTransaction } from "../services/anchor";
 import { uploadImage, CaptureMetadata } from "../services/verification";
+import { uploadNftMetadata } from "../services/cnft";
 import { supabase, ensureUserExists } from "../services/supabase";
 import { PROGRAM_ID } from "../services/solana";
 import { PhotoUploadData } from "../types";
@@ -43,6 +44,31 @@ export function useVerification() {
       try {
         let txSignature: string | null = null;
 
+        // Upload image early — we need the URL for cNFT metadata
+        // This runs during the "hashing" animation, so no extra perceived delay
+        const imageUrl = await uploadImage(
+          supabase,
+          metadata.imageUri,
+          walletAddress
+        );
+
+        // Upload NFT metadata JSON (for cNFT mint instruction)
+        let cnftMetadataUri: string | undefined;
+        try {
+          cnftMetadataUri = await uploadNftMetadata({
+            imageUrl,
+            imageHash: metadata.imageHash,
+            caption,
+            creatorWallet: walletAddress,
+            latitude: metadata.latitude,
+            longitude: metadata.longitude,
+            timestamp: metadata.timestamp,
+          });
+        } catch (metaErr) {
+          // Non-critical: if metadata upload fails, we skip cNFT minting
+          console.error("NFT metadata upload failed (continuing without cNFT):", metaErr);
+        }
+
         // On-chain verification (only if program is deployed)
         if (PROGRAM_DEPLOYED) {
           // Step 1: Signing — building and requesting wallet signature
@@ -61,7 +87,9 @@ export function useVerification() {
                 metadata.latitude ?? 0,
                 metadata.longitude ?? 0,
                 metadata.timestamp,
-                blockhash
+                blockhash,
+                cnftMetadataUri,
+                metadata.imageHash
               );
 
               const slot = await connection.getSlot();
@@ -102,13 +130,6 @@ export function useVerification() {
 
         // Step 3: Confirmed on-chain
         setVerificationStep(3);
-
-        // Upload image to Supabase Storage
-        const imageUrl = await uploadImage(
-          supabase,
-          metadata.imageUri,
-          walletAddress
-        );
 
         // Ensure user row exists before inserting (so creator_id FK gets linked)
         await ensureUserExists(walletAddress);
