@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-88%20passing-brightgreen" alt="88 tests passing" />
+  <img src="https://img.shields.io/badge/tests-101%20passing-brightgreen" alt="101 tests passing" />
   <img src="https://img.shields.io/badge/solana-devnet-blueviolet" alt="Solana Devnet" />
   <img src="https://img.shields.io/badge/platform-Android-green" alt="Android" />
 </p>
@@ -169,7 +169,7 @@ Camera Capture
 | State | TanStack React Query + Zustand |
 | Lists | @shopify/flash-list |
 | Maps | react-native-maps (Google Maps) |
-| Testing | Jest + ts-jest (88 unit tests) |
+| Testing | Jest + ts-jest (101 unit tests) |
 
 ---
 
@@ -208,7 +208,7 @@ Gold glow shadows on primary actions. Spring physics on all interactive elements
 
 ## Testing
 
-Candor includes a comprehensive test suite with **88 unit tests** covering all Solana-related logic:
+Candor includes a comprehensive test suite with **101 unit tests** covering all Solana-related logic:
 
 ```bash
 yarn test
@@ -217,6 +217,7 @@ yarn test
 | Test Suite | Tests | Coverage |
 |------------|-------|----------|
 | `anchor.test.ts` | 20 | Transaction construction, discriminators, buffer layout, account ordering, GPS encoding |
+| `cnft.test.ts` | 13 | Bubblegum program IDs, tree authority PDA, mint_v1 discriminator, Borsh serialization |
 | `solana.test.ts` | 17 | PDA derivation determinism, seed correctness, curve validation |
 | `validation.test.ts` | 23 | Amount bounds, self-vouch prevention, balance checks, timestamp drift, GPS encoding |
 | `format.test.ts` | 22 | SOL formatting, USD conversion, address truncation, time display |
@@ -315,7 +316,7 @@ candor/
     utils/             format, crypto, connection, MWA helpers
     polyfills.ts       Buffer, TextEncoder, crypto shims for React Native
   programs/candor/     Anchor program (lib.rs) — deployed to devnet
-  tests/               88 unit tests (Jest + ts-jest)
+  tests/               101 unit tests (Jest + ts-jest)
   supabase/            SQL migrations (5 files including security hardening)
   assets/              App icon, splash screen, logo
 ```
