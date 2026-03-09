@@ -48,7 +48,7 @@ When someone believes in your photo, they **vouch** for it with real SOL that tr
 </p>
 <p align="center">
   <img src="assets/screenshots/feed.png" width="200" />
-  <img src="assets/screenshots/notifications.png" width="200" />
+  <img src="assets/screenshots/map-feature.jpg" width="200" />
   <img src="assets/screenshots/profile.png" width="200" />
 </p>
 
